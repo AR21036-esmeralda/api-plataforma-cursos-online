@@ -36,7 +36,7 @@ public class Usuario {
     @Column(name = "estado", nullable = false)
     private Boolean estado = true;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "idrol", nullable = false)
     private Rol rol;
 }

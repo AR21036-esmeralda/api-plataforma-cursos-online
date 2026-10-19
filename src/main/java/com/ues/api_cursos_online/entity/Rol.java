@@ -1,7 +1,11 @@
 package com.ues.api_cursos_online.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
 
 /** Rol de un usuario (ADMINISTRADOR, PROFESOR, ESTUDIANTE). Tabla ROL. */
 @Entity
