@@ -1,0 +1,151 @@
+{
+  "info": {
+    "name": "CRUD Leccion - API Cursos Online",
+    "description": "Pruebas del CRUD de Lección y su relación con Curso. Ejecutar en orden lógico y sustituir las variables por IDs existentes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "idCurso",
+      "value": "1"
+    },
+    {
+      "key": "idLeccion",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "GET - Listar todas",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/lecciones",
+        "description": "Esperado: 200 OK y lista JSON."
+      }
+    },
+    {
+      "name": "GET - Filtrar por curso",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/lecciones?idCurso={{idCurso}}",
+        "description": "Esperado: 200 OK; las lecciones aparecen ordenadas por número de orden."
+      }
+    },
+    {
+      "name": "GET - Obtener por ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/lecciones/{{idLeccion}}",
+        "description": "Esperado: 200 OK si existe; 404 si no existe."
+      }
+    },
+    {
+      "name": "POST - Crear lección",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/lecciones",
+        "description": "El curso indicado debe existir. Esperado: 201 Created.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Introducción a Java\",\n  \"contenido\": \"Conceptos básicos de programación en Java.\",\n  \"orden\": 1,\n  \"idCurso\": {{idCurso}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "POST - Validación título vacío",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/lecciones",
+        "description": "Esperado: 400 Bad Request por validación.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \" \",\n  \"contenido\": \"Contenido de prueba\",\n  \"orden\": 2,\n  \"idCurso\": {{idCurso}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "POST - Curso inexistente",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/lecciones",
+        "description": "Esperado: 404 Not Found si no existe el curso 999999.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Lección de prueba\",\n  \"contenido\": \"Contenido\",\n  \"orden\": 99,\n  \"idCurso\": 999999\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "PUT - Actualizar lección",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/lecciones/{{idLeccion}}",
+        "description": "Esperado: 200 OK. El orden no puede repetirse dentro del mismo curso.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"titulo\": \"Introducción a Java actualizada\",\n  \"contenido\": \"Contenido actualizado.\",\n  \"orden\": 1,\n  \"idCurso\": {{idCurso}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "DELETE - Eliminar lección",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/api/lecciones/{{idLeccion}}",
+        "description": "Esperado: 204 No Content."
+      }
+    }
+  ]
+}
