@@ -1,0 +1,531 @@
+{
+  "info": {
+    "_postman_id": "a337b3e9-2aef-430b-a9d3-13a6c99fda0f",
+    "name": "API Plataforma Cursos Online",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "45695376",
+    "_collection_link": "https://go.postman.co/collection/45695376-a337b3e9-2aef-430b-a9d3-13a6c99fda0f?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "CRUD Curso",
+      "item": [
+        {
+          "name": "Listar Cursos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener curso por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear un curso",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"nombreCurso\": \"Curso de prueba Postman\",\r\n  \"descripcion\": \"Curso creado para comprobar el CRUD de la API\",\r\n  \"estado\": true,\r\n  \"idCategoria\": 1,\r\n  \"idProfesor\": 2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/cursos",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "cursos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar el curso",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"nombreCurso\": \"Curso de prueba Postman actualizado\",\r\n  \"descripcion\": \"Curso actualizado para comprobar la operación PUT de la API\",\r\n  \"estado\": true,\r\n  \"idCategoria\": 1,\r\n  \"idProfesor\": 2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/cursos/3",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "cursos",
+                "3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar curso de prueba",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/cursos/3",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "cursos",
+                "3"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verificar curso eliminado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error curso inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error nombreCurso obligatorio",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"nombreCurso\": \"\",\r\n  \"descripcion\": \"Prueba de validación\",\r\n  \"estado\": true,\r\n  \"idCategoria\": 1,\r\n  \"idProfesor\": 2\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/cursos",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "cursos"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error usuario sin rol PROFESOR",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"nombreCurso\": \"Curso de prueba regla de negocio\",\r\n  \"descripcion\": \"Prueba para verificar el rol del usuario\",\r\n  \"estado\": true,\r\n  \"idCategoria\": 1,\r\n  \"idProfesor\": 4\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/cursos",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "cursos"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "CRUD Lección",
+      "item": [
+        {
+          "name": "Listar lecciones",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/lecciones",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "lecciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear una lección",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"titulo\": \"Lección de prueba Postman\",\r\n  \"contenido\": \"Lección creada para comprobar el CRUD de la API.\",\r\n  \"orden\": 3,\r\n  \"idCurso\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/lecciones",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "lecciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar una lección por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar una lección",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar la lección de prueba",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/lecciones/5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "lecciones",
+                "5"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verificar que la lección fue eliminada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar una lección inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error título obligatorio",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"titulo\": \"\",\r\n  \"contenido\": \"Prueba de validación\",\r\n  \"orden\": 3,\r\n  \"idCurso\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/lecciones",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "lecciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error orden duplicado",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/lecciones",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "lecciones"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "CRUD Usuarios",
+      "item": [
+        {
+          "name": "Crear un usuario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"nombreUsuario\": \"Usuario\",\r\n  \"apellidoUsuario\": \"Prueba\",\r\n  \"email\": \"usuario.prueba.postman@example.com\",\r\n  \"password\": \"ClavePrueba123!\",\r\n  \"estado\": true,\r\n  \"idRol\": 2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/usuarios",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar usuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar un usuario",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"nombreUsuario\": \"Usuario Actualizado\",\r\n  \"apellidoUsuario\": \"Prueba\",\r\n  \"email\": \"usuario.prueba.postman@example.com\",\r\n  \"password\": \"ClavePrueba123!\",\r\n  \"estado\": true,\r\n  \"idRol\": 2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/usuarios/7",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "usuarios",
+                "7"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar usuario de prueba",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verificar que el usuario fue eliminado",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/usuarios/7",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "usuarios",
+                "7"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error nombre obligatorio",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"nombreUsuario\": \"\",\r\n  \"apellidoUsuario\": \"Prueba\",\r\n  \"email\": \"usuario.error.postman@example.com\",\r\n  \"password\": \"ClavePrueba123!\",\r\n  \"estado\": true,\r\n  \"idRol\": 2\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/usuarios",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Error rol inexistente",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"nombreUsuario\": \"Usuario\",\r\n  \"apellidoUsuario\": \"Prueba\",\r\n  \"email\": \"usuario.rol.inexistente@example.com\",\r\n  \"password\": \"ClavePrueba123!\",\r\n  \"estado\": true,\r\n  \"idRol\": 9999\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/usuarios",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
