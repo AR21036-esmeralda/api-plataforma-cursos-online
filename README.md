@@ -1,21 +1,8 @@
 # API para una Plataforma de Cursos Online
 
-API REST desarrollada con Spring Boot para gestionar una plataforma educativa en línea, donde estudiantes, profesores y administradores interactúan con cursos, lecciones, evaluaciones e inscripciones.
+API REST desarrollada con Java 21, Spring Boot, Gradle y PostgreSQL para gestionar una plataforma educativa en línea mediante operaciones CRUD.
 
-Proyecto de ciclo de la asignatura Programación Orientada a Objetos, Universidad de El Salvador, Facultad Multidisciplinaria de Occidente.
-
----
-
-## Tabla de contenidos
-
-- [Información académica](#información-académica)
-- [Equipo de desarrollo](#equipo-de-desarrollo)
-- [Descripción del proyecto](#descripción-del-proyecto)
-- [Alcance funcional](#alcance-funcional)
-- [Modelo de datos](#modelo-de-datos)
-- [Cómo clonar el repositorio](#cómo-clonar-el-repositorio)
-
----
+Proyecto académico de la asignatura Programación Orientada a Objetos, Universidad de El Salvador, Facultad Multidisciplinaria de Occidente.
 
 ## Información académica
 
@@ -23,65 +10,161 @@ Proyecto de ciclo de la asignatura Programación Orientada a Objetos, Universida
 |---|---|
 | Universidad | Universidad de El Salvador |
 | Facultad | Facultad Multidisciplinaria de Occidente |
-| Departamento | Departamento de Ingeniería y Arquitectura |
 | Carrera | Ingeniería en Desarrollo de Software |
 | Asignatura | Programación Orientada a Objetos |
 | Ciclo | II - 2026 |
-| Coordinador de cátedra | Ing. Erick Adiel Trigueros Jerez |
-| Tutor asignado (GT03) | Ing. Francisco Javier Morales Ayala |
-
-## Equipo de desarrollo
-
-| Nombre | Carnet |
-|---|---|
-| Esmeralda Isabel Álvarez Rivas | AR21036 |
-| Raquel Abigail Hernández Martínez | HM21008 |
-| Marco Josué Orellana Cortez | OC23006 |
-| Javier Edgardo Vásquez Galeano | VG25001 |
-| América de La Paz Medrano | MM00130 |
-
----
+| Proyecto | Tema 4: API para una Plataforma de Cursos Online |
 
 ## Descripción del proyecto
 
-La plataforma organiza la gestión de cursos, lecciones, evaluaciones e inscripciones de un entorno educativo en línea. Un profesor puede crear y administrar los cursos que le pertenecen, mientras que un estudiante puede inscribirse en varios cursos, seguir su progreso y ser evaluado.
+La plataforma permite gestionar cursos, lecciones, usuarios y otros recursos educativos. El modelo de datos contempla la relación entre estudiantes y cursos mediante inscripciones.
 
-El sistema reconoce tres tipos de usuario:
+### Reglas de negocio
 
-- **Estudiante.** Explora cursos, se inscribe, avanza en las lecciones, resuelve evaluaciones y consulta sus calificaciones.
-- **Profesor.** Administra el contenido de los cursos que tiene asignados: lecciones, evaluaciones, calificaciones y respuestas a preguntas.
-- **Administrador.** Gestiona usuarios, cursos y categorías a nivel general de la plataforma.
+- Un profesor puede crear y administrar cursos.
+- Un estudiante puede inscribirse en varios cursos.
+- Un curso puede contener varias lecciones.
+- La API debe validar los datos y aplicar las reglas de negocio.
+- La relación de inscripciones permite consultar los cursos de un estudiante y los estudiantes de un curso.
 
-La API expone estas operaciones mediante los métodos GET, POST, PUT y DELETE, siguiendo una arquitectura en capas con separación entre controladores, servicios, repositorios y DTOs.
+## Tecnologías utilizadas
 
-## Alcance funcional
+- Java 21
+- Spring Boot
+- Gradle
+- Spring Data JPA y Hibernate
+- PostgreSQL
+- Lombok
+- DTOs y Jakarta Validation
+- Postman
+- Git y GitHub
 
-**Estudiante**
-Registro e inicio de sesión, consulta de cursos disponibles, inscripción y baja de cursos, consulta de lecciones y progreso, resolución de evaluaciones, consulta de calificaciones y preguntas al profesor.
+## Arquitectura del proyecto
 
-**Profesor**
-Consulta de sus cursos asignados, gestión de lecciones y evaluaciones, calificación de actividades, consulta de estudiantes inscritos y respuesta a preguntas.
+El proyecto utiliza una arquitectura en capas para separar las responsabilidades.
 
-**Administrador**
-Gestión de usuarios (registro, actualización, activación y baja), gestión de cursos (creación, actualización, asignación de profesor) y gestión de categorías.
-
-El detalle completo de requerimientos, casos de uso y reglas de negocio está documentado en el PDF de la Entrega 1, entregado por campus virtual.
+| Componente | Responsabilidad |
+|---|---|
+| `controller` | Gestiona las solicitudes HTTP. |
+| `service` | Contiene la lógica de negocio. |
+| `repository` | Gestiona el acceso a la base de datos. |
+| `entity` | Representa las entidades persistentes. |
+| `dto` | Define los datos de entrada y salida. |
+| `exception` | Gestiona los errores de la API. |
 
 ## Modelo de datos
 
-Entidades principales del dominio:
+Las principales entidades son:
 
-`Usuario`, `Rol`, `Categoria`, `Curso`, `Leccion`, `Evaluacion`, `Inscripcion`, `Progreso`, `Calificacion`, `Pregunta`, `Respuesta`.
+`Usuario`, `Rol`, `Categoria`, `Curso`, `Leccion`, `Inscripcion`, `Evaluacion`, `Progreso`, `Calificacion`, `Pregunta` y `Respuesta`.
 
-La relación entre `Usuario` y `Curso` a través de `Inscripcion` permite listar los cursos de un estudiante y los estudiantes de un curso, que es la regla de negocio central del proyecto.
+La entidad `Inscripcion` representa la relación entre estudiantes y cursos.
 
-## Cómo clonar el repositorio
+## Endpoints principales
 
-```
+La API utiliza el prefijo `/api` y se ejecuta, de forma predeterminada, en el puerto `8081`.
+
+### Cursos — `/api/cursos`
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | `/api/cursos` | Listar cursos. |
+| GET | `/api/cursos/{id}` | Consultar un curso por identificador. |
+| POST | `/api/cursos` | Crear un curso. |
+| PUT | `/api/cursos/{id}` | Actualizar un curso. |
+| DELETE | `/api/cursos/{id}` | Eliminar un curso. |
+
+### Lecciones — `/api/lecciones`
+
+| Método | Endpoint | Descripción |
+|---|---|---|
+| GET | `/api/lecciones` | Listar lecciones. |
+| GET | `/api/lecciones/{id}` | Consultar una lección por identificador. |
+| POST | `/api/lecciones` | Crear una lección. |
+| PUT | `/api/lecciones/{id}` | Actualizar una lección. |
+| DELETE | `/api/lecciones/{id}` | Eliminar una lección. |
+
+También existen controladores para categorías, usuarios y roles.
+
+**Nota:** los endpoints de inscripciones deben documentarse cuando estén implementados y probados.
+
+## Requisitos previos
+
+- JDK 21.
+- PostgreSQL.
+- Git.
+- IntelliJ IDEA u otro IDE compatible con Gradle.
+- Postman para probar la API.
+
+## Instalación y ejecución
+
+### 1. Clonar el repositorio
+
+```bash
 git clone https://github.com/AR21036-esmeralda/api-plataforma-cursos-online.git
 cd api-plataforma-cursos-online
 ```
 
+### 2. Configurar PostgreSQL
+
+Crea la base de datos y ejecuta los scripts SQL incluidos en la documentación del proyecto.
+
+Verifica la conexión en `src/main/resources/application.properties`. Configura las credenciales mediante variables de entorno y evita publicar contraseñas en GitHub.
+
+### 3. Ejecutar las pruebas
+
+Desde la terminal integrada de IntelliJ IDEA, ejecuta:
+
+```powershell
+.\gradlew.bat test
+```
+
+### 4. Iniciar la aplicación
+
+```powershell
+.\gradlew.bat bootRun
+```
+
+La aplicación estará disponible en:
+
+`http://localhost:8081`
+
+## Pruebas con Postman
+
+Las pruebas deben comprobar las operaciones CRUD y sus casos de éxito y error.
+
+Para la Entrega #2 se priorizara la demostración de dos entidades relacionadas: Curso y Lección.
+
+Se recomienda verificar:
+
+- Consultas mediante GET.
+- Creación mediante POST.
+- Actualización mediante PUT.
+- Eliminación mediante DELETE.
+- Validaciones de datos.
+- Identificadores y recursos inexistentes.
+- Reglas de negocio y códigos de respuesta HTTP.
+
+## Control de versiones
+
+El proyecto utiliza Git y GitHub para gestionar el código fuente y registrar los cambios.
+
+Comandos útiles:
+
+```bash
+git status
+git log --oneline
+git pull
+```
+
+## Entrega #2
+
+La entrega contempla la presentación general del proyecto, el repositorio y el trabajo colaborativo, la explicación de la base de datos y una demostración funcional en Postman.
+
+También se evalúan Gradle, Lombok, DTOs, la arquitectura en capas, las validaciones y las pruebas de los endpoints.
+
 ---
 
-Proyecto académico desarrollado para la asignatura Programación Orientada a Objetos, Ciclo II - 2026, Universidad de El Salvador.
+Proyecto académico de Programación Orientada a Objetos, Ciclo II - 2026.
+
+Universidad de El Salvador, Facultad Multidisciplinaria de Occidente.
