@@ -15,8 +15,26 @@
           "request": {
             "method": "GET",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
-              "raw": ""
+              "raw": "http://localhost:8081/api/cursos",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "cursos"
+              ]
             }
           },
           "response": []
@@ -27,7 +45,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": ""
+              "raw": "http://localhost:8081/api/cursos/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "cursos",
+                "1"
+              ]
             }
           },
           "response": []
@@ -129,7 +157,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": ""
+              "raw": "http://localhost:8081/api/cursos/9999",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "cursos",
+                "9999"
+              ]
             }
           },
           "response": []
@@ -252,7 +290,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": ""
+              "raw": "http://localhost:8081/api/lecciones/5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "lecciones",
+                "5"
+              ]
             }
           },
           "response": []
@@ -262,8 +310,27 @@
           "request": {
             "method": "PUT",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"titulo\": \"Lección de prueba Postman actualizada\",\r\n  \"contenido\": \"Contenido actualizado para comprobar la operación PUT de la API.\",\r\n  \"orden\": 3,\r\n  \"idCurso\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
-              "raw": ""
+              "raw": "http://localhost:8081/api/lecciones/5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "lecciones",
+                "5"
+              ]
             }
           },
           "response": []
@@ -295,7 +362,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": ""
+              "raw": "http://localhost:8081/api/lecciones/5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "lecciones",
+                "5"
+              ]
             }
           },
           "response": []
@@ -306,7 +383,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": ""
+              "raw": "http://localhost:8081/api/lecciones/9999",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "lecciones",
+                "9999"
+              ]
             }
           },
           "response": []
@@ -345,6 +432,15 @@
           "request": {
             "method": "POST",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"titulo\": \"Prueba de orden duplicado\",\r\n  \"contenido\": \"Esta lección no debería crearse porque el orden ya existe.\",\r\n  \"orden\": 1,\r\n  \"idCurso\": 1\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "http://localhost:8081/api/lecciones",
               "protocol": "http",
@@ -368,7 +464,7 @@
         {
           "name": "Crear un usuario",
           "request": {
-            "method": "GET",
+            "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
@@ -400,7 +496,16 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": ""
+              "raw": "http://localhost:8081/api/usuarios",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "usuarios"
+              ]
             }
           },
           "response": []
@@ -438,10 +543,20 @@
         {
           "name": "Eliminar usuario de prueba",
           "request": {
-            "method": "GET",
+            "method": "DELETE",
             "header": [],
             "url": {
-              "raw": ""
+              "raw": "http://localhost:8081/api/usuarios/7",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "usuarios",
+                "7"
+              ]
             }
           },
           "response": []
