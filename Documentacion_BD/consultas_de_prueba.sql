@@ -73,3 +73,8 @@ INNER JOIN CURSO c ON i.idCurso = c.idCurso
 INNER JOIN LECCION l ON c.idCurso = l.idCurso
 LEFT JOIN PROGRESO pr ON l.idLeccion = pr.idLeccion AND u.idUsuario = pr.idUsuario
 ORDER BY u.nombreUsuario, l.orden;
+
+
+
+SELECT *  FROM curso WHERE idcurso =3
+
