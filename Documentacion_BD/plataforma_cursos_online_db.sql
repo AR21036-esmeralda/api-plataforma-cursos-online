@@ -1,4 +1,4 @@
-CREATE DATABASE plataforma_cursos_oline
+CREATE DATABASE plataforma_cursos_online
     WITH
     OWNER = postgres
     ENCODING = 'UTF8'

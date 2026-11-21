@@ -1,0 +1,70 @@
+name: CI/CD Pipeline - Plataforma Cursos Online
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar herramientas base (curl y docker)
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends curl ca-certificates docker.io
+      - name: 2. Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: 3. Ejecutar pruebas unitarias JUnit (Gradle)
+        run: |
+          chmod +x gradlew
+          ./gradlew test --no-daemon
+
+      - name: 4. Construir imagen Docker local
+        run: |
+          docker build -t api-cursos-online:latest .
+          docker save api-cursos-online:latest -o /tmp/api.tar
+          docker cp /tmp/api.tar desktop-control-plane:/api.tar
+          docker exec desktop-control-plane ctr -n k8s.io images import /api.tar
+          docker exec desktop-control-plane rm /api.tar && rm /tmp/api.tar
+
+      - name: 5. Configurar kubectl y validar conexión
+        run: |
+          if ! command -v kubectl &> /dev/null; then
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+            mv kubectl /usr/local/bin/
+          fi
+          mkdir -p ~/.kube
+          K8S_PORT=$(docker port desktop-control-plane 6443/tcp | head -n 1 | cut -d':' -f2)
+          K8S_PORT=${K8S_PORT:-6443}
+          docker exec desktop-control-plane cat /etc/kubernetes/admin.conf \
+            | sed -E "s#server: https://[^:]+:[0-9]+#server: https://host.docker.internal:${K8S_PORT}#g" \
+            | sed 's/certificate-authority-data:.*/insecure-skip-tls-verify: true/g' > ~/.kube/config
+          kubectl cluster-info
+         
+
+      - name: 6. Desplegar en Kubernetes local
+        run: |
+          awk '/CREATE TABLE ROL/,0' Documentacion_BD/plataforma_cursos_online_db.sql > /tmp/01_schema.sql
+          cp Documentacion_BD/datos_de_pruebas.sql /tmp/02_datos.sql
+          kubectl create configmap db-init-sql \
+            --from-file=01_schema.sql=/tmp/01_schema.sql \
+            --from-file=02_datos.sql=/tmp/02_datos.sql \
+            --dry-run=client -o yaml | kubectl apply -f -
+          rm -f /tmp/01_schema.sql /tmp/02_datos.sql
+          kubectl apply -f k8s/postgres.yaml
+          kubectl rollout status deployment/postgres-db --timeout=120s
+          kubectl apply -f k8s/api-deployment.yaml
+          kubectl rollout restart deployment/api-cursos-online
+          kubectl rollout status deployment/api-cursos-online --timeout=120s
+          kubectl get pods,svc
+          

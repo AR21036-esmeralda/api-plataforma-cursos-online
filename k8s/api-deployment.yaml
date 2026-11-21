@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-cursos-online
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-cursos-online
+  template:
+    metadata:
+      labels:
+        app: api-cursos-online
+    spec:
+      containers:
+        - name: api-cursos-online
+          image: api-cursos-online:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          env:
+            - name: DB_URL
+              value: "jdbc:postgresql://postgres-service:5432/plataforma_cursos_online"
+            - name: DB_USER
+              value: "postgres"
+            - name: DB_PASSWORD
+              value: "postgres"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-cursos-service
+spec:
+  type: NodePort
+  selector:
+    app: api-cursos-online
+  ports:
+    - port: 8081
+      targetPort: 8081
+      nodePort: 30081
