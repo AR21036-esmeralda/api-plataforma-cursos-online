@@ -15,6 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Instalar herramientas base (curl y docker)
+        if: env.ACT == 'true'
         run: |
           apt-get update && apt-get install -y --no-install-recommends curl ca-certificates docker.io
       - name: 2. Configurar Java 21
@@ -31,12 +32,15 @@ jobs:
       - name: 4. Construir imagen Docker local
         run: |
           docker build -t api-cursos-online:latest .
-          docker save api-cursos-online:latest -o /tmp/api.tar
-          docker cp /tmp/api.tar desktop-control-plane:/api.tar
-          docker exec desktop-control-plane ctr -n k8s.io images import /api.tar
-          docker exec desktop-control-plane rm /api.tar && rm /tmp/api.tar
+          if [ "$ACT" = "true" ]; then
+            docker save api-cursos-online:latest -o /tmp/api.tar
+            docker cp /tmp/api.tar desktop-control-plane:/api.tar
+            docker exec desktop-control-plane ctr -n k8s.io images import /api.tar
+            docker exec desktop-control-plane rm /api.tar && rm /tmp/api.tar
+          fi
 
       - name: 5. Configurar kubectl y validar conexión
+        if: env.ACT == 'true'
         run: |
           if ! command -v kubectl &> /dev/null; then
             curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -53,6 +57,7 @@ jobs:
          
 
       - name: 6. Desplegar en Kubernetes local
+        if: env.ACT == 'true'
         run: |
           awk '/CREATE TABLE ROL/,0' Documentacion_BD/plataforma_cursos_online_db.sql > /tmp/01_schema.sql
           cp Documentacion_BD/datos_de_pruebas.sql /tmp/02_datos.sql
