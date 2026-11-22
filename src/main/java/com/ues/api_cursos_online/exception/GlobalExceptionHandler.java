@@ -11,6 +11,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import jakarta.validation.ConstraintViolationException;
 
@@ -20,16 +21,27 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-      @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Map<String, String>> manejarRecursoNoEncontrado(
-            ResourceNotFoundException ex) {
+          @ExceptionHandler(ResourceNotFoundException.class)
+          public ResponseEntity<Map<String, String>> manejarRecursoNoEncontrado(
+                  ResourceNotFoundException ex) {
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of(
-                        "mensaje", ex.getMessage(),
-                        "error", "Recurso no encontrado"
-                ));
-    }
+              return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                      .body(Map.of(
+                              "mensaje", ex.getMessage(),
+                              "error", "Recurso no encontrado"
+                      ));
+          }
+
+          @ExceptionHandler(NoResourceFoundException.class)
+          public ResponseEntity<Map<String, String>> manejarRutaNoEncontrada(
+                  NoResourceFoundException ex) {
+
+              return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                      .body(Map.of(
+                              "mensaje", "La ruta solicitada no existe",
+                              "error", "Recurso no encontrado"
+                      ));
+          }
 
        @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<Map<String, String>> manejarReglaDeNegocio(

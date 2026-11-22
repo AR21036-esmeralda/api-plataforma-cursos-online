@@ -37,10 +37,46 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Listar cursos devuelve 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Obtener curso por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Consultar curso por ID devuelve 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  ""
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -62,12 +98,30 @@
         },
         {
           "name": "Crear un curso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Crear curso devuelve 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    const respuesta = pm.response.json();",
+                  "    pm.expect(respuesta).to.have.property(\"idCurso\");",
+                  "    pm.collectionVariables.set(\"cursoPruebaId\", String(respuesta.idCurso));",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"nombreCurso\": \"Curso de prueba Postman\",\r\n  \"descripcion\": \"Curso creado para comprobar el CRUD de la API\",\r\n  \"estado\": true,\r\n  \"idCategoria\": 1,\r\n  \"idProfesor\": 2\r\n}",
+              "raw": "{\n  \"nombreCurso\": \"Curso de prueba para integración\",\n  \"descripcion\": \"Prueba de creación desde Postman\",\n  \"estado\": true,\n  \"idCategoria\": 1,\n  \"idProfesor\": 2\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -85,7 +139,8 @@
                 "api",
                 "cursos"
               ]
-            }
+            },
+            "description": "Ejecutar primero para crear SOLO un curso de prueba. Guarda su ID en cursoPruebaId. No repetir POST por accidente."
           },
           "response": []
         },
@@ -104,7 +159,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8081/api/cursos/3",
+              "raw": "http://localhost:8081/api/cursos/{{cursoPruebaId}}",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -113,11 +168,36 @@
               "path": [
                 "api",
                 "cursos",
-                "3"
+                "{{cursoPruebaId}}"
               ]
-            }
+            },
+            "description": "Solo actualizar el curso creado en esta misma colección. Requiere cursoPruebaId."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get(\"cursoPruebaId\")) {",
+                  "    throw new Error(\"Primero ejecutar Crear un curso para obtener cursoPruebaId\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Actualizar curso devuelve 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Eliminar curso de prueba",
@@ -125,7 +205,7 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8081/api/cursos/3",
+              "raw": "http://localhost:8081/api/cursos/{{cursoPruebaId}}",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -134,11 +214,36 @@
               "path": [
                 "api",
                 "cursos",
-                "3"
+                "{{cursoPruebaId}}"
               ]
-            }
+            },
+            "description": "ATENCIÓN: modifica la base de datos. Ejecutar solo una vez después de crear el curso de prueba."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get(\"cursoPruebaId\")) {",
+                  "    throw new Error(\"Primero ejecutar Crear un curso para obtener cursoPruebaId\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Eliminar curso devuelve 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Verificar curso eliminado",
@@ -146,10 +251,36 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": ""
+              "raw": "http://localhost:8081/api/cursos/{{cursoPruebaId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "cursos",
+                "{{cursoPruebaId}}"
+              ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Curso eliminado devuelve 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Curso ya no existe\", function () {",
+                  "    pm.expect(pm.response.json().error).to.eql(\"Recurso no encontrado\");",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Error curso inexistente",
@@ -170,10 +301,34 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Curso inexistente devuelve 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Error nombreCurso obligatorio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Nombre obligatorio devuelve 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Validación de nombreCurso correcta\", function () {\r\n    const respuesta = pm.response.json();\r\n    pm.expect(respuesta.error).to.eql(\"Datos inválidos\");\r\n    pm.expect(respuesta.mensaje).to.include(\"nombreCurso\");\r\n});\r\n"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
@@ -203,6 +358,17 @@
         },
         {
           "name": "Error usuario sin rol PROFESOR",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Usuario sin rol PROFESOR devuelve 409\", function () {\r\n    pm.response.to.have.status(409);\r\n});\r\n\r\npm.test(\"Regla de negocio validada\", function () {\r\n    const respuesta = pm.response.json();\r\n    pm.expect(respuesta.error).to.eql(\"Regla de negocio incumplida\");\r\n    pm.expect(respuesta.mensaje).to.include(\"no tiene rol PROFESOR\");\r\n});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
@@ -229,6 +395,38 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Error ID inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"ID inválido devuelve 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Mensaje de error correcto\", function () {\r\n    const respuesta = pm.response.json();\r\n    pm.expect(respuesta.error).to.eql(\"Parámetro inválido\");\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8081/api/cursos/abc",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "cursos",
+                "abc"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -237,6 +435,17 @@
       "item": [
         {
           "name": "Listar lecciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Listar lecciones devuelve 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"La respuesta es una lista de lecciones\", function () {\r\n    const respuesta = pm.response.json();\r\n    pm.expect(respuesta).to.be.an(\"array\");\r\n});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -262,7 +471,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"titulo\": \"Lección de prueba Postman\",\r\n  \"contenido\": \"Lección creada para comprobar el CRUD de la API.\",\r\n  \"orden\": 3,\r\n  \"idCurso\": 1\r\n}",
+              "raw": "{\n  \"titulo\": \"Lección de prueba Entrega 3\",\n  \"contenido\": \"Prueba de creación de lecciones con Postman.\",\n  \"orden\": 4,\n  \"idCurso\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -280,9 +489,28 @@
                 "api",
                 "lecciones"
               ]
-            }
+            },
+            "description": "Crea una lección de prueba vinculada al curso 1 con orden 4. Si ese orden ya existe, elegir uno libre ANTES de enviar. Guarda leccionPruebaId."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Crear lección devuelve 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "    const respuesta = pm.response.json();",
+                  "    pm.expect(respuesta).to.have.property(\"idLeccion\");",
+                  "    pm.collectionVariables.set(\"leccionPruebaId\", String(respuesta.idLeccion));",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Consultar una lección por ID",
@@ -303,7 +531,20 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Consultar lección devuelve 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Actualizar una lección",
@@ -312,7 +553,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"titulo\": \"Lección de prueba Postman actualizada\",\r\n  \"contenido\": \"Contenido actualizado para comprobar la operación PUT de la API.\",\r\n  \"orden\": 3,\r\n  \"idCurso\": 1\r\n}",
+              "raw": "{\r\n  \"titulo\": \"Lección de prueba Entrega 3 actualizada\",\r\n  \"contenido\": \"Verificación de la actualización mediante PUT en Postman.\",\r\n  \"orden\": 4,\r\n  \"idCurso\": 1\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -320,7 +561,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8081/api/lecciones/5",
+              "raw": "http://localhost:8081/api/lecciones/{{leccionPruebaId}}",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -329,11 +570,35 @@
               "path": [
                 "api",
                 "lecciones",
-                "5"
+                "{{leccionPruebaId}}"
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get(\"leccionPruebaId\")) {",
+                  "    throw new Error(\"Primero ejecutar Crear una lección para obtener leccionPruebaId\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Actualizar lección devuelve 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Eliminar la lección de prueba",
@@ -341,7 +606,7 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8081/api/lecciones/5",
+              "raw": "http://localhost:8081/api/lecciones/{{leccionPruebaId}}",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -350,19 +615,55 @@
               "path": [
                 "api",
                 "lecciones",
-                "5"
+                "{{leccionPruebaId}}"
               ]
-            }
+            },
+            "description": "ATENCIÓN: modifica la base de datos. Ejecutar solo para la lección de prueba creada en esta colección."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get(\"leccionPruebaId\")) {",
+                  "    throw new Error(\"Primero ejecutar Crear una lección para obtener leccionPruebaId\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Eliminar lección devuelve 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Verificar que la lección fue eliminada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Lección eliminada devuelve 404\", function () {\r\n    pm.response.to.have.status(404);\r\n});\r\n\r\npm.test(\"Confirma que la lección no existe\", function () {\r\n    const respuesta = pm.response.json();\r\n    pm.expect(respuesta.error).to.eql(\"Recurso no encontrado\");\r\n});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8081/api/lecciones/5",
+              "raw": "http://localhost:8081/api/lecciones/{{leccionPruebaId}}",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -371,7 +672,7 @@
               "path": [
                 "api",
                 "lecciones",
-                "5"
+                "{{leccionPruebaId}}"
               ]
             }
           },
@@ -379,6 +680,17 @@
         },
         {
           "name": "Consultar una lección inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Lección inexistente devuelve 404\", function () {\r\n    pm.response.to.have.status(404);\r\n});\r\n\r\npm.test(\"Mensaje de recurso no encontrado\", function () {\r\n    const respuesta = pm.response.json();\r\n    pm.expect(respuesta.error).to.eql(\"Recurso no encontrado\");\r\n});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -400,6 +712,17 @@
         },
         {
           "name": "Error título obligatorio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Título obligatorio devuelve 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Validación de título correcta\", function () {\r\n    const respuesta = pm.response.json();\r\n    pm.expect(respuesta.error).to.eql(\"Datos inválidos\");\r\n    pm.expect(respuesta.mensaje).to.include(\"titulo\");\r\n});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
@@ -429,12 +752,23 @@
         },
         {
           "name": "Error orden duplicado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Orden duplicado devuelve 409\", function () {\r\n    pm.response.to.have.status(409);\r\n});\r\n\r\npm.test(\"Regla de orden duplicado validada\", function () {\r\n    const respuesta = pm.response.json();\r\n    pm.expect(respuesta.error).to.eql(\"Regla de negocio incumplida\");\r\n    pm.expect(respuesta.mensaje).to.include(\"Ya existe una lección con ese orden\");\r\n});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"titulo\": \"Prueba de orden duplicado\",\r\n  \"contenido\": \"Esta lección no debería crearse porque el orden ya existe.\",\r\n  \"orden\": 1,\r\n  \"idCurso\": 1\r\n}",
+              "raw": "{\r\n  \"titulo\": \"Prueba de orden duplicado\",\r\n  \"contenido\": \"Validación de regla de negocio.\",\r\n  \"orden\": 3,\r\n  \"idCurso\": 1\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -468,7 +802,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"nombreUsuario\": \"Usuario\",\r\n  \"apellidoUsuario\": \"Prueba\",\r\n  \"email\": \"usuario.prueba.postman@example.com\",\r\n  \"password\": \"ClavePrueba123!\",\r\n  \"estado\": true,\r\n  \"idRol\": 2\r\n}",
+              "raw": "{\n  \"nombreUsuario\": \"Usuario\",\n  \"apellidoUsuario\": \"Prueba\",\n  \"email\": \"{{emailUsuarioPrueba}}\",\n  \"password\": \"ClavePrueba123!\",\n  \"estado\": true,\n  \"idRol\": 2\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -486,12 +820,52 @@
                 "api",
                 "usuarios"
               ]
-            }
+            },
+            "description": "Crear un usuario de prueba con email único. En el controlador original POST devuelve 200 (no 201). Captura usuarioPruebaId y emailUsuarioPrueba."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const emailNuevo = \"usuario.prueba.\" + Date.now() + \"@example.com\";",
+                  "pm.collectionVariables.set(\"emailUsuarioPrueba\", emailNuevo);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Crear usuario devuelve 200 o 201 según controlador\", function () {",
+                  "    pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "if ([200, 201].includes(pm.response.code)) {",
+                  "    const respuesta = pm.response.json();",
+                  "    pm.expect(respuesta).to.have.property(\"idUsuario\");",
+                  "    pm.collectionVariables.set(\"usuarioPruebaId\", String(respuesta.idUsuario));",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Listar usuarios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Listar usuarios devuelve 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"La respuesta es una lista de usuarios\", function () {\r\n    const respuesta = pm.response.json();\r\n    pm.expect(respuesta).to.be.an(\"array\");\r\n});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -517,7 +891,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"nombreUsuario\": \"Usuario Actualizado\",\r\n  \"apellidoUsuario\": \"Prueba\",\r\n  \"email\": \"usuario.prueba.postman@example.com\",\r\n  \"password\": \"ClavePrueba123!\",\r\n  \"estado\": true,\r\n  \"idRol\": 2\r\n}",
+              "raw": "{\n  \"nombreUsuario\": \"Usuario Actualizado\",\n  \"apellidoUsuario\": \"Prueba\",\n  \"email\": \"{{emailUsuarioPrueba}}\",\n  \"password\": \"ClavePrueba123!\",\n  \"estado\": true,\n  \"idRol\": 2\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -525,7 +899,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8081/api/usuarios/7",
+              "raw": "http://localhost:8081/api/usuarios/{{usuarioPruebaId}}",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -534,11 +908,35 @@
               "path": [
                 "api",
                 "usuarios",
-                "7"
+                "{{usuarioPruebaId}}"
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get(\"usuarioPruebaId\")) {",
+                  "    throw new Error(\"Primero ejecutar Crear un usuario para obtener usuarioPruebaId\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Actualizar usuario devuelve 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Eliminar usuario de prueba",
@@ -546,7 +944,7 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8081/api/usuarios/7",
+              "raw": "http://localhost:8081/api/usuarios/{{usuarioPruebaId}}",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -555,19 +953,44 @@
               "path": [
                 "api",
                 "usuarios",
-                "7"
+                "{{usuarioPruebaId}}"
               ]
-            }
+            },
+            "description": "ATENCIÓN: modifica la base de datos. El controlador original devuelve 200. Solo eliminar usuarioPruebaId recién creado por la colección."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get(\"usuarioPruebaId\")) {",
+                  "    throw new Error(\"Primero ejecutar Crear un usuario para obtener usuarioPruebaId\");",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Eliminar usuario devuelve 200 o 204 según controlador\", function () {",
+                  "    pm.expect([200, 204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Verificar que el usuario fue eliminado",
           "request": {
-            "method": "DELETE",
+            "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8081/api/usuarios/7",
+              "raw": "http://localhost:8081/api/usuarios",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -575,15 +998,46 @@
               "port": "8081",
               "path": [
                 "api",
-                "usuarios",
-                "7"
+                "usuarios"
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Listar usuarios devuelve 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Usuario de prueba eliminado\", function () {",
+                  "    const idPrueba = Number(pm.collectionVariables.get(\"usuarioPruebaId\"));",
+                  "    pm.expect(idPrueba, \"Primero crear usuario de prueba\").to.be.above(0);",
+                  "    const usuarios = pm.response.json();",
+                  "    pm.expect(usuarios).to.be.an(\"array\");",
+                  "    const existe = usuarios.some(usuario => Number(usuario.idUsuario) === idPrueba);",
+                  "    pm.expect(existe).to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Error nombre obligatorio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Nombre de usuario obligatorio devuelve 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Validación del nombre de usuario correcta\", function () {\r\n    const respuesta = pm.response.json();\r\n    pm.expect(respuesta.error).to.eql(\"Datos inválidos\");\r\n    pm.expect(respuesta.mensaje).to.include(\"nombreUsuario\");\r\n});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
@@ -638,9 +1092,47 @@
               ]
             }
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Rol inexistente devuelve 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Mensaje de recurso no encontrado\", function () {",
+                  "    pm.expect(pm.response.json().error).to.eql(\"Recurso no encontrado\");",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "cursoPruebaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "leccionPruebaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "usuarioPruebaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "emailUsuarioPrueba",
+      "value": "",
+      "type": "string"
     }
   ]
 }

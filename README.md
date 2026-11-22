@@ -37,6 +37,7 @@ La plataforma permite gestionar cursos, lecciones, usuarios y otros recursos edu
 - Lombok
 - DTOs y Jakarta Validation
 - Postman
+- Swagger (OpenAPI 3)
 - Git y GitHub
 
 ## Arquitectura del proyecto
@@ -129,21 +130,80 @@ La aplicación estará disponible en:
 
 `http://localhost:8081`
 
+## Documentación de la API con Swagger
+
+La API incorpora Swagger UI y OpenAPI 3 para consultar y probar los endpoints REST de forma interactiva.
+
+Con la aplicación en ejecución, acceder a:
+- **Swagger UI:** http://localhost:8081/swagger-ui/index.html
+- **OpenAPI JSON:** http://localhost:8081/v3/api-docs
+La documentación incluye los endpoints GET, POST, PUT y DELETE, organizados por controlador, junto con los parámetros y modelos de datos utilizados.
+Si la aplicación se ejecuta en un puerto diferente, se debe reemplazar `8081` por el puerto correspondiente.
+
+
 ## Pruebas con Postman
 
-Las pruebas deben comprobar las operaciones CRUD y sus casos de éxito y error.
+La API cuenta con una colección de Postman para comprobar las operaciones REST y validar las respuestas HTTP.
 
-Para la Entrega #2 se priorizara la demostración de dos entidades relacionadas: Curso y Lección.
+La colección se encuentra en:
 
-Se recomienda verificar:
+`Postman/API Plataforma Cursos Online.postman_collection.json`
 
-- Consultas mediante GET.
-- Creación mediante POST.
-- Actualización mediante PUT.
-- Eliminación mediante DELETE.
-- Validaciones de datos.
-- Identificadores y recursos inexistentes.
-- Reglas de negocio y códigos de respuesta HTTP.
+### Ejecución de las pruebas
+
+1. Iniciar la aplicación Spring Boot.
+2. Abrir Postman e importar la colección JSON.
+3. Configurar la URL base: `http://localhost:8081`.
+4. Ejecutar las solicitudes de los diferentes controladores.
+5. Verificar las respuestas y los códigos HTTP obtenidos.
+
+### Operaciones a verificar
+
+- GET: consultar y listar registros.
+- POST: crear nuevos registros.
+- PUT: actualizar registros existentes.
+- DELETE: eliminar registros.
+- Validar las relaciones entre entidades.
+- Comprobar datos incorrectos y recursos inexistentes.
+
+### Códigos de respuesta HTTP
+
+| Código | Descripción |
+|---|---|
+| 200 OK | Solicitud procesada correctamente. |
+| 201 Created | Recurso creado correctamente. |
+| 204 No Content | Operación completada sin contenido de respuesta. |
+| 400 Bad Request | Datos o parámetros inválidos. |
+| 404 Not Found | Recurso no encontrado. |
+| 409 Conflict | Conflicto con una regla de negocio o restricción. |
+| 500 Internal Server Error | Error interno del servidor. |
+
+Los códigos esperados deben verificarse según la operación implementada en cada controlador.
+
+## Despliegue con Docker y Kubernetes
+
+El proyecto utiliza Docker para construir la imagen de la API y Kubernetes para desplegar la aplicación junto con PostgreSQL.
+
+- `Dockerfile`: construcción de la imagen Docker.
+- `k8s/postgres.yaml`: configuración de PostgreSQL.
+- `k8s/api-deployment.yaml`: despliegue de la API.
+- `.github/workflows/ci-cd.yml`: automatización de pruebas, construcción y despliegue.
+
+### Comandos principales
+
+Construir la imagen:
+
+```bash
+docker build -t api-cursos-online:latest .
+```
+
+Verificar los recursos desplegados:
+
+```bash
+kubectl get pods,svc
+```
+
+El despliegue requiere Docker, Kubernetes y kubectl configurados. El pipeline CI/CD puede ejecutarse localmente con `act`.
 
 ## Control de versiones
 
@@ -157,11 +217,11 @@ git log --oneline
 git pull
 ```
 
-## Entrega #2
+## Entrega #3 — Defensa Final
 
-La entrega contempla la presentación general del proyecto, el repositorio y el trabajo colaborativo, la explicación de la base de datos y una demostración funcional en Postman.
+La entrega final contempla la demostración de los endpoints GET, POST, PUT y DELETE, el manejo de relaciones entre entidades, las validaciones y los códigos de respuesta HTTP.
 
-También se evalúan Gradle, Lombok, DTOs, la arquitectura en capas, las validaciones y las pruebas de los endpoints.
+También incluye la documentación con Swagger y Postman, las pruebas unitarias con JUnit y la demostración del despliegue mediante Kubernetes y CI/CD.
 
 ---
 
