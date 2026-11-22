@@ -1,0 +1,1221 @@
+{
+  "info": {
+    "name": "CRUD Pregunta y Respuesta",
+    "description": "Pruebas de /api/preguntas y /api/respuestas. Crea una pregunta y una respuesta de prueba y las elimina al final. Requiere la base con los datos de prueba (usuarios 1-6 y lecciones 1-4).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1 - Pregunta",
+      "item": [
+        {
+          "name": "Crear pregunta (estudiante 6, lección 1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"Devuelve estudiante y lección\", function () { pm.expect(j.nombreEstudiante).to.be.a(\"string\"); pm.expect(j.tituloLeccion).to.be.a(\"string\"); pm.expect(j.fecha).to.be.a(\"string\"); });",
+                  "pm.test(\"Incluye cabecera Location\", function () { pm.expect(pm.response.headers.has(\"Location\")).to.be.true; });",
+                  "pm.collectionVariables.set(\"idPregunta\", j.idPregunta);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": 6,\n  \"idLeccion\": 1,\n  \"contenido\": \"¿Para qué sirve el atributo alt en una imagen?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listar preguntas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar preguntas por lección",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Todas son de la lección 1\", function () { pm.response.json().forEach(function (p) { pm.expect(p.idLeccion).to.eql(1); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas?idLeccion=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas"
+              ],
+              "query": [
+                {
+                  "key": "idLeccion",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar preguntas por estudiante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Todas son del usuario 6\", function () { pm.response.json().forEach(function (p) { pm.expect(p.idUsuario).to.eql(6); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas?idUsuario=6",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas"
+              ],
+              "query": [
+                {
+                  "key": "idUsuario",
+                  "value": "6"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener pregunta por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas/{{idPregunta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas",
+                "{{idPregunta}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar pregunta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Contenido actualizado\", function () { pm.expect(pm.response.json().contenido).to.eql(\"Pregunta actualizada desde Postman\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas/{{idPregunta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas",
+                "{{idPregunta}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": 6,\n  \"idLeccion\": 1,\n  \"contenido\": \"Pregunta actualizada desde Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Respuestas de la pregunta (aún vacías)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Lista vacía\", function () { pm.expect(pm.response.json().length).to.eql(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas/{{idPregunta}}/respuestas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas",
+                "{{idPregunta}}",
+                "respuestas"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Respuesta",
+      "item": [
+        {
+          "name": "Crear respuesta (profesor 2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", function () { pm.response.to.have.status(201); });",
+                  "const j = pm.response.json();",
+                  "pm.test(\"Devuelve profesor y fecha\", function () { pm.expect(j.nombreProfesor).to.be.a(\"string\"); pm.expect(j.fecha).to.be.a(\"string\"); });",
+                  "pm.test(\"Incluye cabecera Location\", function () { pm.expect(pm.response.headers.has(\"Location\")).to.be.true; });",
+                  "pm.collectionVariables.set(\"idRespuesta\", j.idRespuesta);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPregunta\": \"{{idPregunta}}\",\n  \"idUsuario\": 2,\n  \"contenido\": \"Describe la imagen para lectores de pantalla y si no carga.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Listar respuestas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar respuestas por pregunta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Una respuesta\", function () { pm.expect(pm.response.json().length).to.eql(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas?idPregunta={{idPregunta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas"
+              ],
+              "query": [
+                {
+                  "key": "idPregunta",
+                  "value": "{{idPregunta}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Listar respuestas por profesor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Todas son del usuario 2\", function () { pm.response.json().forEach(function (r) { pm.expect(r.idUsuario).to.eql(2); }); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas?idUsuario=2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas"
+              ],
+              "query": [
+                {
+                  "key": "idUsuario",
+                  "value": "2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener respuesta por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas/{{idRespuesta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas",
+                "{{idRespuesta}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Actualizar respuesta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Contenido actualizado\", function () { pm.expect(pm.response.json().contenido).to.eql(\"Respuesta actualizada desde Postman\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas/{{idRespuesta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas",
+                "{{idRespuesta}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPregunta\": \"{{idPregunta}}\",\n  \"idUsuario\": 2,\n  \"contenido\": \"Respuesta actualizada desde Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Respuestas de la pregunta (ya tiene una)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"Una respuesta\", function () { pm.expect(pm.response.json().length).to.eql(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas/{{idPregunta}}/respuestas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas",
+                "{{idPregunta}}",
+                "respuestas"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 - Casos de error",
+      "item": [
+        {
+          "name": "400 - Pregunta sin contenido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": 6,\n  \"idLeccion\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "400 - Pregunta con contenido en blanco",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": 6,\n  \"idLeccion\": 1,\n  \"contenido\": \"   \"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "400 - Pregunta con id de lección negativo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": 6,\n  \"idLeccion\": -1,\n  \"contenido\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "400 - Respuesta sin contenido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPregunta\": \"{{idPregunta}}\",\n  \"idUsuario\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "400 - Respuesta sin pregunta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 400\", function () { pm.response.to.have.status(400); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": 2,\n  \"contenido\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "404 - Pregunta con lección inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": 6,\n  \"idLeccion\": 9999,\n  \"contenido\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "404 - Pregunta con usuario inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": 9999,\n  \"idLeccion\": 1,\n  \"contenido\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "404 - Pregunta inexistente (GET)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas/9999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas",
+                "9999"
+              ]
+            }
+          }
+        },
+        {
+          "name": "404 - Respuestas de una pregunta inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas/9999/respuestas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas",
+                "9999",
+                "respuestas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "404 - Respuesta con pregunta inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPregunta\": 9999,\n  \"idUsuario\": 2,\n  \"contenido\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "404 - Respuesta con usuario inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPregunta\": \"{{idPregunta}}\",\n  \"idUsuario\": 9999,\n  \"contenido\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "404 - Respuesta inexistente (GET)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas/9999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas",
+                "9999"
+              ]
+            }
+          }
+        },
+        {
+          "name": "409 - Un profesor no puede hacer preguntas (usuario 2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409\", function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": 2,\n  \"idLeccion\": 1,\n  \"contenido\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "409 - Un estudiante no puede responder (usuario 4)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 409\", function () { pm.response.to.have.status(409); });",
+                  "pm.test(\"Trae mensaje de error\", function () { pm.expect(pm.response.json()).to.have.property(\"mensaje\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idPregunta\": \"{{idPregunta}}\",\n  \"idUsuario\": 4,\n  \"contenido\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 - Limpieza",
+      "item": [
+        {
+          "name": "Eliminar respuesta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas/{{idRespuesta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas",
+                "{{idRespuesta}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "La respuesta ya no existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/respuestas/{{idRespuesta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respuestas",
+                "{{idRespuesta}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Eliminar pregunta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas/{{idPregunta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas",
+                "{{idPregunta}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "La pregunta ya no existe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 404\", function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/preguntas/{{idPregunta}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "preguntas",
+                "{{idPregunta}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "idPregunta",
+      "value": ""
+    },
+    {
+      "key": "idRespuesta",
+      "value": ""
+    }
+  ]
+}
