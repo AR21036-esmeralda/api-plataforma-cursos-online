@@ -85,9 +85,15 @@ La API utiliza el prefijo `/api` y se ejecuta, de forma predeterminada, en el pu
 | PUT | `/api/lecciones/{id}` | Actualizar una lección. |
 | DELETE | `/api/lecciones/{id}` | Eliminar una lección. |
 
-También existen controladores para categorías, usuarios y roles.
+También se encuentran implementados los siguientes módulos:
 
-**Nota:** los endpoints de inscripciones deben documentarse cuando estén implementados y probados.
+- **Usuarios:** gestión de usuarios mediante GET, POST, PUT y DELETE. La creación devuelve `201 Created` y la eliminación `204 No Content`.
+- **Roles:** administración de roles de usuario.
+- **Categorías:** administración de categorías de cursos.
+- **Evaluaciones:** CRUD de evaluaciones mediante `/api/evaluaciones`.
+- **Calificaciones:** CRUD de calificaciones mediante `/api/calificaciones`.
+
+Los endpoints implementados pueden consultarse en Swagger UI.
 
 ## Requisitos previos
 
@@ -101,10 +107,8 @@ También existen controladores para categorías, usuarios y roles.
 
 ### 1. Clonar el repositorio
 
-```bash
 git clone https://github.com/AR21036-esmeralda/api-plataforma-cursos-online.git
 cd api-plataforma-cursos-online
-```
 
 ### 2. Configurar PostgreSQL
 
@@ -116,15 +120,11 @@ Verifica la conexión en `src/main/resources/application.properties`. Configura 
 
 Desde la terminal integrada de IntelliJ IDEA, ejecuta:
 
-```powershell
 .\gradlew.bat test
-```
 
 ### 4. Iniciar la aplicación
 
-```powershell
 .\gradlew.bat bootRun
-```
 
 La aplicación estará disponible en:
 
@@ -178,7 +178,12 @@ La colección se encuentra en:
 | 409 Conflict | Conflicto con una regla de negocio o restricción. |
 | 500 Internal Server Error | Error interno del servidor. |
 
-Los códigos esperados deben verificarse según la operación implementada en cada controlador.
+
+### Respuestas HTTP del módulo Usuarios
+
+El módulo Usuarios devuelve `201 Created` al registrar un usuario y `204 No Content` al eliminarlo correctamente. Las demás operaciones conservan sus respuestas correspondientes.
+
+Estas operaciones fueron verificadas mediante Postman, junto con las validaciones de errores `400`, `404` y `409`.
 
 ## Despliegue con Docker y Kubernetes
 

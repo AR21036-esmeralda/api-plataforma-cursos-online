@@ -6,6 +6,7 @@ import com.ues.api_cursos_online.service.UsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class UsuarioController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public UsuarioResponseDTO crear(@Valid @RequestBody UsuarioRequestDTO dto) {
         return usuarioService.crear(dto);
     }
@@ -33,6 +35,7 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable Long id) {
         usuarioService.eliminar(id);
     }
