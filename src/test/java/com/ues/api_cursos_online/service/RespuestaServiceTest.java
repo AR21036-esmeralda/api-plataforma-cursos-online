@@ -2,6 +2,8 @@ package com.ues.api_cursos_online.service;
 
 import com.ues.api_cursos_online.dto.RespuestaRequestDTO;
 import com.ues.api_cursos_online.dto.RespuestaResponseDTO;
+import com.ues.api_cursos_online.entity.Curso;
+import com.ues.api_cursos_online.entity.Leccion;
 import com.ues.api_cursos_online.entity.Pregunta;
 import com.ues.api_cursos_online.entity.Respuesta;
 import com.ues.api_cursos_online.entity.Rol;
@@ -58,7 +60,13 @@ class RespuestaServiceTest {
         profesor.setEstado(true);
         profesor.setRol(rolProfesor);
 
-        pregunta = Pregunta.builder().idPregunta(30L).contenido("¿Qué es un elemento block?").build();
+        Curso curso = Curso.builder().idCurso(1L).nombreCurso("Desarrollo Web")
+                .profesor(profesor).build();
+        Leccion leccion = Leccion.builder().idLeccion(1L).titulo("Introducción")
+                .curso(curso).build();
+
+        pregunta = Pregunta.builder().idPregunta(30L).contenido("¿Qué es un elemento block?")
+                .leccion(leccion).build();
 
         respuesta = Respuesta.builder()
                 .idRespuesta(40L).pregunta(pregunta).usuario(profesor)
@@ -72,6 +80,7 @@ class RespuestaServiceTest {
     void crear_conDatosValidos_guardaConFecha() {
         when(preguntaRepository.findById(30L)).thenReturn(Optional.of(pregunta));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(profesor));
+        when(respuestaRepository.existsByPregunta_IdPregunta(30L)).thenReturn(false);
         when(respuestaRepository.save(any(Respuesta.class))).thenAnswer(inv -> inv.getArgument(0));
 
         RespuestaResponseDTO dto = respuestaService.crear(request);
@@ -80,6 +89,7 @@ class RespuestaServiceTest {
         assertEquals("Ana Martínez", dto.getNombreProfesor());
         assertEquals(30L, dto.getIdPregunta());
         assertNotNull(dto.getFecha());
+        verify(respuestaRepository).existsByPregunta_IdPregunta(30L);
     }
 
     @Test
@@ -120,6 +130,42 @@ class RespuestaServiceTest {
     }
 
     @Test
+    void crear_conProfesorQueNoImparteElCurso_lanzaReglaDeNegocio() {
+        Usuario otroProfesor = new Usuario();
+        otroProfesor.setIdUsuario(9L);
+        otroProfesor.setEstado(true);
+        otroProfesor.setRol(profesor.getRol());
+
+        request.setIdUsuario(9L);
+        when(preguntaRepository.findById(30L)).thenReturn(Optional.of(pregunta));
+        when(usuarioRepository.findById(9L)).thenReturn(Optional.of(otroProfesor));
+
+        BusinessRuleException excepcion = assertThrows(
+                BusinessRuleException.class,
+                () -> respuestaService.crear(request)
+        );
+
+        assertEquals("El profesor no imparte el curso al que pertenece la pregunta",
+                excepcion.getMessage());
+        verify(respuestaRepository, never()).save(any());
+    }
+
+    @Test
+    void crear_conPreguntaYaRespondida_lanzaReglaDeNegocio() {
+        when(preguntaRepository.findById(30L)).thenReturn(Optional.of(pregunta));
+        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(profesor));
+        when(respuestaRepository.existsByPregunta_IdPregunta(30L)).thenReturn(true);
+
+        BusinessRuleException excepcion = assertThrows(
+                BusinessRuleException.class,
+                () -> respuestaService.crear(request)
+        );
+
+        assertEquals("La pregunta ya tiene una respuesta", excepcion.getMessage());
+        verify(respuestaRepository, never()).save(any());
+    }
+
+    @Test
     void obtenerPorId_inexistente_lanzaNotFound() {
         when(respuestaRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -149,12 +195,27 @@ class RespuestaServiceTest {
         when(respuestaRepository.findById(40L)).thenReturn(Optional.of(respuesta));
         when(preguntaRepository.findById(30L)).thenReturn(Optional.of(pregunta));
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(profesor));
+        when(respuestaRepository
+                .existsByPregunta_IdPreguntaAndIdRespuestaNot(30L, 40L)).thenReturn(false);
         when(respuestaRepository.save(any(Respuesta.class))).thenAnswer(inv -> inv.getArgument(0));
         request.setContenido("Respuesta editada");
 
         RespuestaResponseDTO dto = respuestaService.actualizar(40L, request);
 
         assertEquals("Respuesta editada", dto.getContenido());
+    }
+
+    @Test
+    void actualizar_conOtraRespuestaEnLaPregunta_lanzaReglaDeNegocio() {
+        when(respuestaRepository.findById(40L)).thenReturn(Optional.of(respuesta));
+        when(preguntaRepository.findById(30L)).thenReturn(Optional.of(pregunta));
+        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(profesor));
+        when(respuestaRepository
+                .existsByPregunta_IdPreguntaAndIdRespuestaNot(30L, 40L)).thenReturn(true);
+
+        assertThrows(BusinessRuleException.class,
+                () -> respuestaService.actualizar(40L, request));
+        verify(respuestaRepository, never()).save(any());
     }
 
     @Test

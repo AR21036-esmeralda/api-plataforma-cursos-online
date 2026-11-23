@@ -22,9 +22,14 @@ public interface CursoRepository extends JpaRepository<Curso, Long> {
             WHERE (:estado IS NULL OR c.estado = :estado)
               AND (:idCategoria IS NULL OR cat.idCategoria = :idCategoria)
               AND (:idProfesor IS NULL OR p.idUsuario = :idProfesor)
+              AND (:estado IS NOT NULL OR cat.estado = TRUE)
             ORDER BY c.idCurso
             """)
     List<Curso> buscar(@Param("estado") Boolean estado,
                        @Param("idCategoria") Long idCategoria,
                        @Param("idProfesor") Long idProfesor);
+
+    boolean existsByCategoria_IdCategoria(Long idCategoria);
+
+    boolean existsByProfesor_IdUsuario(Long idProfesor);
 }

@@ -149,7 +149,7 @@ class ProgresoControllerTest {
     // =========================================================
 
     @Test
-    void crear_ConDatosValidos_DebeRetornar200()
+    void crear_ConDatosValidos_DebeRetornar201()
             throws Exception {
 
         ProgresoRequestDTO request =
@@ -174,7 +174,7 @@ class ProgresoControllerTest {
                                         )
                                 )
                 )
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.idProgreso")
                         .value(1))
                 .andExpect(jsonPath("$.idUsuario")
@@ -304,7 +304,7 @@ class ProgresoControllerTest {
     // =========================================================
 
     @Test
-    void eliminar_DebeRetornar200()
+    void eliminar_DebeRetornar204()
             throws Exception {
 
         doNothing()
@@ -317,7 +317,7 @@ class ProgresoControllerTest {
                                 1L
                         )
                 )
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(progresoService)
                 .eliminar(1L);

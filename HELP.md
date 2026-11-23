@@ -1,27 +1,41 @@
-# Read Me First
-The following was discovered as part of building this project:
+# Ayuda rápida — API Plataforma Cursos Online
 
-* The original package name 'com.ues.api-cursos-online' is invalid and this project uses 'com.ues.api_cursos_online' instead.
+Esta guía es un índice breve. La documentación completa está en [README.md](README.md).
 
-# Getting Started
+## Ejecución local
 
-### Reference Documentation
-For further reference, please consider the following sections:
+```bash
+bash gradlew clean test
+bash gradlew bootRun
+```
 
-* [Official Gradle documentation](https://docs.gradle.org)
-* [Spring Boot Gradle Plugin Reference Guide](https://docs.spring.io/spring-boot/4.0.8/gradle-plugin)
-* [Create an OCI image](https://docs.spring.io/spring-boot/4.0.8/gradle-plugin/packaging-oci-image.html)
-* [Spring Web](https://docs.spring.io/spring-boot/4.0.8/reference/web/servlet.html)
+Base URL: `http://localhost:8081`. Requiere JDK 21 y PostgreSQL (o variables `DB_URL`, `DB_USER`, `DB_PASSWORD`).
 
-### Guides
-The following guides illustrate how to use some features concretely:
+## Construcción y despliegue
 
-* [Building a RESTful Web Service](https://spring.io/guides/gs/rest-service/)
-* [Serving Web Content with Spring MVC](https://spring.io/guides/gs/serving-web-content/)
-* [Building REST services with Spring](https://spring.io/guides/tutorials/rest/)
+```bash
+bash gradlew bootJar
+docker build -t api-cursos:latest .
+kind load docker-image api-cursos:latest --name cursos-local
+mkdir -p .kube-local
+kind export kubeconfig --name cursos-local --kubeconfig .kube-local/config
+export KUBECONFIG=.kube-local/config
+kubectl apply -f k8s/
+kubectl port-forward svc/api-cursos-service 8081:8081
+```
 
-### Additional Links
-These additional references should also help you:
+## CI/CD
 
-* [Gradle Build Scans – insights for your project's build](https://scans.gradle.com#gradle)
+```bash
+act -j build
+```
 
+El job `build` ejecuta pruebas, genera el JAR, construye la imagen y despliega en Kubernetes solo en `push` o con `act`. En GitHub Actions se crea un cluster kind efímero si no existe; con `act` se requiere un cluster previo en el host.
+
+## Enlaces útiles
+
+- [Documentación de Spring Boot 4.0.8](https://docs.spring.io/spring-boot/4.0.8/reference/)
+- [Gradle 9.7.1](https://docs.gradle.org/9.7.1/userguide/userguide.html)
+- [kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
+- [act](https://github.com/nektos/act#readme)
+- [SpringDoc OpenAPI](https://springdoc.org/)

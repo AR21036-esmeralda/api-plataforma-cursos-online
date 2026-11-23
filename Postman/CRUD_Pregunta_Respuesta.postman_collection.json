@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "CRUD Pregunta y Respuesta",
-    "description": "Pruebas de /api/preguntas y /api/respuestas. Crea una pregunta y una respuesta de prueba y las elimina al final. Requiere la base con los datos de prueba (usuarios 1-6 y lecciones 1-4).",
+    "description": "Pruebas de /api/preguntas y /api/respuestas (Entrega #3). El estudiante 6 pregunta en la lección 3 del curso 2 (donde está inscrito) y responde el profesor 3 (dueño de ese curso), porque la API valida la pertenencia. Crea y elimina la pregunta y la respuesta. Requiere datos_de_pruebas.sql (lecciones 1-4). baseUrl = http://localhost:8081.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -9,7 +9,7 @@
       "name": "1 - Pregunta",
       "item": [
         {
-          "name": "Crear pregunta (estudiante 6, lección 1)",
+          "name": "Crear pregunta (estudiante 6, lección 3 - curso 2)",
           "event": [
             {
               "listen": "test",
@@ -45,7 +45,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idUsuario\": 6,\n  \"idLeccion\": 1,\n  \"contenido\": \"¿Para qué sirve el atributo alt en una imagen?\"\n}",
+              "raw": "{\n  \"idUsuario\": 6,\n  \"idLeccion\": 3,\n  \"contenido\": \"¿Qué diferencia hay entre una clave primaria y una clave foránea?\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -92,7 +92,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
-                  "pm.test(\"Todas son de la lección 1\", function () { pm.response.json().forEach(function (p) { pm.expect(p.idLeccion).to.eql(1); }); });"
+                  "pm.test(\"Todas son de la lección 3\", function () { pm.response.json().forEach(function (p) { pm.expect(p.idLeccion).to.eql(3); }); });"
                 ]
               }
             }
@@ -101,7 +101,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/preguntas?idLeccion=1",
+              "raw": "{{baseUrl}}/api/preguntas?idLeccion=3",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -112,7 +112,7 @@
               "query": [
                 {
                   "key": "idLeccion",
-                  "value": "1"
+                  "value": "3"
                 }
               ]
             }
@@ -191,7 +191,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
-                  "pm.test(\"Contenido actualizado\", function () { pm.expect(pm.response.json().contenido).to.eql(\"Pregunta actualizada desde Postman\"); });"
+                  "pm.test(\"Contenido actualizado\", function () { pm.expect(pm.response.json().contenido).to.eql(\"Pregunta actualizada sobre claves foráneas\"); });"
                 ]
               }
             }
@@ -217,7 +217,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idUsuario\": 6,\n  \"idLeccion\": 1,\n  \"contenido\": \"Pregunta actualizada desde Postman\"\n}",
+              "raw": "{\n  \"idUsuario\": 6,\n  \"idLeccion\": 3,\n  \"contenido\": \"Pregunta actualizada sobre claves foráneas\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -263,7 +263,7 @@
       "name": "2 - Respuesta",
       "item": [
         {
-          "name": "Crear respuesta (profesor 2)",
+          "name": "Crear respuesta (profesor 3, dueño del curso 2)",
           "event": [
             {
               "listen": "test",
@@ -299,7 +299,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idPregunta\": \"{{idPregunta}}\",\n  \"idUsuario\": 2,\n  \"contenido\": \"Describe la imagen para lectores de pantalla y si no carga.\"\n}",
+              "raw": "{\n  \"idPregunta\": {{idPregunta}},\n  \"idUsuario\": 3,\n  \"contenido\": \"La primaria identifica cada fila; la foránea referencia la primaria de otra tabla.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -381,7 +381,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
-                  "pm.test(\"Todas son del usuario 2\", function () { pm.response.json().forEach(function (r) { pm.expect(r.idUsuario).to.eql(2); }); });"
+                  "pm.test(\"Todas son del usuario 3\", function () { pm.response.json().forEach(function (r) { pm.expect(r.idUsuario).to.eql(3); }); });"
                 ]
               }
             }
@@ -390,7 +390,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/respuestas?idUsuario=2",
+              "raw": "{{baseUrl}}/api/respuestas?idUsuario=3",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -401,7 +401,7 @@
               "query": [
                 {
                   "key": "idUsuario",
-                  "value": "2"
+                  "value": "3"
                 }
               ]
             }
@@ -445,7 +445,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 200\", function () { pm.response.to.have.status(200); });",
-                  "pm.test(\"Contenido actualizado\", function () { pm.expect(pm.response.json().contenido).to.eql(\"Respuesta actualizada desde Postman\"); });"
+                  "pm.test(\"Contenido actualizado\", function () { pm.expect(pm.response.json().contenido).to.eql(\"Respuesta actualizada sobre claves foráneas\"); });"
                 ]
               }
             }
@@ -471,7 +471,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idPregunta\": \"{{idPregunta}}\",\n  \"idUsuario\": 2,\n  \"contenido\": \"Respuesta actualizada desde Postman\"\n}",
+              "raw": "{\n  \"idPregunta\": {{idPregunta}},\n  \"idUsuario\": 3,\n  \"contenido\": \"Respuesta actualizada sobre claves foráneas\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -679,7 +679,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idPregunta\": \"{{idPregunta}}\",\n  \"idUsuario\": 2\n}",
+              "raw": "{\n  \"idPregunta\": {{idPregunta}},\n  \"idUsuario\": 3\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -912,7 +912,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idPregunta\": 9999,\n  \"idUsuario\": 2,\n  \"contenido\": \"x\"\n}",
+              "raw": "{\n  \"idPregunta\": 9999,\n  \"idUsuario\": 3,\n  \"contenido\": \"x\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -955,7 +955,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idPregunta\": \"{{idPregunta}}\",\n  \"idUsuario\": 9999,\n  \"contenido\": \"x\"\n}",
+              "raw": "{\n  \"idPregunta\": {{idPregunta}},\n  \"idUsuario\": 9999,\n  \"contenido\": \"x\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1071,7 +1071,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idPregunta\": \"{{idPregunta}}\",\n  \"idUsuario\": 4,\n  \"contenido\": \"x\"\n}",
+              "raw": "{\n  \"idPregunta\": {{idPregunta}},\n  \"idUsuario\": 4,\n  \"contenido\": \"x\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

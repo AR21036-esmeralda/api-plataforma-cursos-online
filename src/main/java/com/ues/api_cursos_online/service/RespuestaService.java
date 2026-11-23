@@ -51,6 +51,8 @@ public class RespuestaService {
     public RespuestaResponseDTO crear(RespuestaRequestDTO dto) {
         Pregunta pregunta = buscarPregunta(dto.getIdPregunta());
         Usuario profesor = obtenerProfesorActivo(dto.getIdUsuario());
+        validarProfesorDelCurso(profesor, pregunta);
+        validarUnaSolaRespuesta(dto.getIdPregunta(), null);
 
         Respuesta respuesta = Respuesta.builder()
                 .pregunta(pregunta)
@@ -66,6 +68,8 @@ public class RespuestaService {
         Respuesta respuesta = buscarRespuesta(id);
         Pregunta pregunta = buscarPregunta(dto.getIdPregunta());
         Usuario profesor = obtenerProfesorActivo(dto.getIdUsuario());
+        validarProfesorDelCurso(profesor, pregunta);
+        validarUnaSolaRespuesta(dto.getIdPregunta(), id);
 
         respuesta.setPregunta(pregunta);
         respuesta.setUsuario(profesor);
@@ -105,6 +109,26 @@ public class RespuestaService {
             throw new BusinessRuleException("El profesor con id " + idUsuario + " está desactivado");
         }
         return usuario;
+    }
+
+    /** CU20: el profesor debe impartir el curso al que pertenece la pregunta. */
+    private void validarProfesorDelCurso(Usuario profesor, Pregunta pregunta) {
+        Long profesorDelCurso = pregunta.getLeccion().getCurso().getProfesor().getIdUsuario();
+        if (!profesorDelCurso.equals(profesor.getIdUsuario())) {
+            throw new BusinessRuleException(
+                    "El profesor no imparte el curso al que pertenece la pregunta");
+        }
+    }
+
+    /** La consigna define la relación Pregunta → Respuesta como 1:0..1. */
+    private void validarUnaSolaRespuesta(Long idPregunta, Long idRespuestaActual) {
+        boolean existe = idRespuestaActual == null
+                ? respuestaRepository.existsByPregunta_IdPregunta(idPregunta)
+                : respuestaRepository.existsByPregunta_IdPreguntaAndIdRespuestaNot(
+                        idPregunta, idRespuestaActual);
+        if (existe) {
+            throw new BusinessRuleException("La pregunta ya tiene una respuesta");
+        }
     }
 
     private RespuestaResponseDTO toResponse(Respuesta respuesta) {

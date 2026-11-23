@@ -1,7 +1,7 @@
-
 package com.ues.api_cursos_online.exception;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -21,29 +22,29 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-          @ExceptionHandler(ResourceNotFoundException.class)
-          public ResponseEntity<Map<String, String>> manejarRecursoNoEncontrado(
-                  ResourceNotFoundException ex) {
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, String>> manejarRecursoNoEncontrado(
+            ResourceNotFoundException ex) {
 
-              return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                      .body(Map.of(
-                              "mensaje", ex.getMessage(),
-                              "error", "Recurso no encontrado"
-                      ));
-          }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "mensaje", ex.getMessage(),
+                        "error", "Recurso no encontrado"
+                ));
+    }
 
-          @ExceptionHandler(NoResourceFoundException.class)
-          public ResponseEntity<Map<String, String>> manejarRutaNoEncontrada(
-                  NoResourceFoundException ex) {
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Map<String, String>> manejarRutaNoEncontrada(
+            NoResourceFoundException ex) {
 
-              return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                      .body(Map.of(
-                              "mensaje", "La ruta solicitada no existe",
-                              "error", "Recurso no encontrado"
-                      ));
-          }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "mensaje", "La ruta solicitada no existe",
+                        "error", "Recurso no encontrado"
+                ));
+    }
 
-       @ExceptionHandler(BusinessRuleException.class)
+    @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<Map<String, String>> manejarReglaDeNegocio(
             BusinessRuleException ex) {
 
@@ -98,6 +99,39 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> manejarArgumentoInvalido(
+            IllegalArgumentException ex) {
+
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of(
+                        "mensaje", ex.getMessage(),
+                        "error", "Regla de negocio incumplida"
+                ));
+    }
+
+    @ExceptionHandler(EmptyResultDataAccessException.class)
+    public ResponseEntity<Map<String, String>> manejarEliminacionInexistente(
+            EmptyResultDataAccessException ex) {
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of(
+                        "mensaje", "El recurso que intenta eliminar no existe",
+                        "error", "Recurso no encontrado"
+                ));
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<Map<String, String>> manejarValidacionMetodo(
+            HandlerMethodValidationException ex) {
+
+        return ResponseEntity.badRequest()
+                .body(Map.of(
+                        "mensaje", "Uno o más parámetros de la solicitud no son válidos",
+                        "error", "Parámetro inválido"
+                ));
+    }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, String>> manejarTipoInvalido(

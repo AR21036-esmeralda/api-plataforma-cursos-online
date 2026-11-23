@@ -149,7 +149,9 @@ CREATE TABLE RESPUESTA (
     CONSTRAINT fk_respuesta_usuario 
         FOREIGN KEY (idUsuario) 
         REFERENCES USUARIO (idUsuario) 
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT uq_respuesta_pregunta
+        UNIQUE (idPregunta)
 );
 
 
@@ -157,15 +159,13 @@ CREATE TABLE EVALUACION (
     idEvaluacion BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     titulo VARCHAR(200) NOT NULL,
     descripcion VARCHAR(1000),
+    fechaLimite TIMESTAMP,
     idCurso BIGINT NOT NULL,
 
     CONSTRAINT fk_evaluacion_curso
         FOREIGN KEY (idCurso)
         REFERENCES CURSO (idCurso)
-        ON DELETE CASCADE,
-
-    CONSTRAINT uq_evaluacion_curso
-        UNIQUE (idCurso)   --evita que curso tenga mas de una evaluacion registrada
+        ON DELETE CASCADE
 );
 
 
@@ -192,6 +192,24 @@ CREATE TABLE CALIFICACION (
 
     CONSTRAINT chk_calificacion_nota
         CHECK (nota BETWEEN 0 AND 10)
+);
+
+-- Registro de evaluaciones realizadas por los estudiantes (CU10)
+CREATE TABLE INTENTO_EVALUACION (
+    idIntento BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    idUsuario BIGINT NOT NULL,
+    idEvaluacion BIGINT NOT NULL,
+    fechaRealizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_intento_usuario
+        FOREIGN KEY (idUsuario)
+        REFERENCES USUARIO (idUsuario)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_intento_evaluacion
+        FOREIGN KEY (idEvaluacion)
+        REFERENCES EVALUACION (idEvaluacion)
+        ON DELETE CASCADE,
+    CONSTRAINT uq_intento_usuario_evaluacion
+        UNIQUE (idUsuario, idEvaluacion)
 );
 
 

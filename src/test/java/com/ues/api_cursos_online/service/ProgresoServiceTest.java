@@ -6,8 +6,10 @@ import com.ues.api_cursos_online.entity.Curso;
 import com.ues.api_cursos_online.entity.Leccion;
 import com.ues.api_cursos_online.entity.Progreso;
 import com.ues.api_cursos_online.entity.Usuario;
+import com.ues.api_cursos_online.exception.BusinessRuleException;
 import com.ues.api_cursos_online.exception.ResourceNotFoundException;
 import com.ues.api_cursos_online.repository.CursoRepository;
+import com.ues.api_cursos_online.repository.InscripcionRepository;
 import com.ues.api_cursos_online.repository.LeccionRepository;
 import com.ues.api_cursos_online.repository.ProgresoRepository;
 import com.ues.api_cursos_online.repository.UsuarioRepository;
@@ -42,6 +44,9 @@ class ProgresoServiceTest {
     @Mock
     private CursoRepository cursoRepository;
 
+    @Mock
+    private InscripcionRepository inscripcionRepository;
+
     @InjectMocks
     private ProgresoService progresoService;
 
@@ -53,7 +58,6 @@ class ProgresoServiceTest {
 
     @BeforeEach
     void setUp() {
-
         usuario = new Usuario();
         usuario.setIdUsuario(1L);
         usuario.setNombreUsuario("Javier");
@@ -88,41 +92,28 @@ class ProgresoServiceTest {
         requestDTO.setEstado(false);
     }
 
+    private void inscripcionActiva() {
+        when(inscripcionRepository
+                .existsByUsuario_IdUsuarioAndCurso_IdCursoAndEstadoTrue(1L, 1L))
+                .thenReturn(true);
+    }
+
     // =========================================================
     // LISTAR
     // =========================================================
 
     @Test
     void listar_DebeRetornarProgresos() {
+        when(progresoRepository.findAll()).thenReturn(List.of(progreso));
 
-        when(progresoRepository.findAll())
-                .thenReturn(List.of(progreso));
-
-        List<ProgresoResponseDTO> resultado =
-                progresoService.listar();
+        List<ProgresoResponseDTO> resultado = progresoService.listar();
 
         assertNotNull(resultado);
         assertEquals(1, resultado.size());
-
-        assertEquals(
-                1L,
-                resultado.get(0).getIdProgreso()
-        );
-
-        assertEquals(
-                "Javier",
-                resultado.get(0).getNombreUsuario()
-        );
-
-        assertEquals(
-                "Introduccion",
-                resultado.get(0).getTituloLeccion()
-        );
-
-        assertEquals(
-                "Bases de Datos",
-                resultado.get(0).getNombreCurso()
-        );
+        assertEquals(1L, resultado.get(0).getIdProgreso());
+        assertEquals("Javier", resultado.get(0).getNombreUsuario());
+        assertEquals("Introduccion", resultado.get(0).getTituloLeccion());
+        assertEquals("Bases de Datos", resultado.get(0).getNombreCurso());
 
         verify(progresoRepository).findAll();
     }
@@ -133,12 +124,9 @@ class ProgresoServiceTest {
 
     @Test
     void buscarPorId_CuandoExiste_DebeRetornarProgreso() {
+        when(progresoRepository.findById(1L)).thenReturn(Optional.of(progreso));
 
-        when(progresoRepository.findById(1L))
-                .thenReturn(Optional.of(progreso));
-
-        ProgresoResponseDTO resultado =
-                progresoService.buscarPorId(1L);
+        ProgresoResponseDTO resultado = progresoService.buscarPorId(1L);
 
         assertNotNull(resultado);
         assertEquals(1L, resultado.getIdProgreso());
@@ -150,14 +138,9 @@ class ProgresoServiceTest {
 
     @Test
     void buscarPorId_CuandoNoExiste_DebeLanzarExcepcion() {
+        when(progresoRepository.findById(99L)).thenReturn(Optional.empty());
 
-        when(progresoRepository.findById(99L))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                ResourceNotFoundException.class,
-                () -> progresoService.buscarPorId(99L)
-        );
+        assertThrows(ResourceNotFoundException.class, () -> progresoService.buscarPorId(99L));
 
         verify(progresoRepository).findById(99L);
     }
@@ -168,51 +151,33 @@ class ProgresoServiceTest {
 
     @Test
     void crear_ComoPendiente_DebeGuardarSinFecha() {
-
-        when(usuarioRepository.findById(1L))
-                .thenReturn(Optional.of(usuario));
-
-        when(leccionRepository.findById(1L))
-                .thenReturn(Optional.of(leccion));
-
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(leccionRepository.findById(1L)).thenReturn(Optional.of(leccion));
+        inscripcionActiva();
         when(progresoRepository
-                .existsByUsuario_IdUsuarioAndLeccion_IdLeccion(
-                        1L,
-                        1L
-                ))
+                .existsByUsuario_IdUsuarioAndLeccion_IdLeccion(1L, 1L))
                 .thenReturn(false);
-
         when(progresoRepository.save(any(Progreso.class)))
                 .thenAnswer(invocation -> {
-
-                    Progreso nuevo =
-                            invocation.getArgument(0);
-
+                    Progreso nuevo = invocation.getArgument(0);
                     nuevo.setIdProgreso(1L);
-
                     return nuevo;
                 });
 
-        ProgresoResponseDTO resultado =
-                progresoService.crear(requestDTO);
+        ProgresoResponseDTO resultado = progresoService.crear(requestDTO);
 
         assertNotNull(resultado);
         assertEquals(1L, resultado.getIdProgreso());
-
         assertFalse(resultado.getEstado());
         assertNull(resultado.getFechaCompletada());
 
         verify(usuarioRepository).findById(1L);
         verify(leccionRepository).findById(1L);
-
+        verify(inscripcionRepository)
+                .existsByUsuario_IdUsuarioAndCurso_IdCursoAndEstadoTrue(1L, 1L);
         verify(progresoRepository)
-                .existsByUsuario_IdUsuarioAndLeccion_IdLeccion(
-                        1L,
-                        1L
-                );
-
-        verify(progresoRepository)
-                .save(any(Progreso.class));
+                .existsByUsuario_IdUsuarioAndLeccion_IdLeccion(1L, 1L);
+        verify(progresoRepository).save(any(Progreso.class));
     }
 
     // =========================================================
@@ -221,44 +186,27 @@ class ProgresoServiceTest {
 
     @Test
     void crear_ComoCompletado_DebeGenerarFecha() {
-
         requestDTO.setEstado(true);
 
-        when(usuarioRepository.findById(1L))
-                .thenReturn(Optional.of(usuario));
-
-        when(leccionRepository.findById(1L))
-                .thenReturn(Optional.of(leccion));
-
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(leccionRepository.findById(1L)).thenReturn(Optional.of(leccion));
+        inscripcionActiva();
         when(progresoRepository
-                .existsByUsuario_IdUsuarioAndLeccion_IdLeccion(
-                        1L,
-                        1L
-                ))
+                .existsByUsuario_IdUsuarioAndLeccion_IdLeccion(1L, 1L))
                 .thenReturn(false);
-
         when(progresoRepository.save(any(Progreso.class)))
                 .thenAnswer(invocation -> {
-
-                    Progreso nuevo =
-                            invocation.getArgument(0);
-
+                    Progreso nuevo = invocation.getArgument(0);
                     nuevo.setIdProgreso(1L);
-
                     return nuevo;
                 });
 
-        ProgresoResponseDTO resultado =
-                progresoService.crear(requestDTO);
+        ProgresoResponseDTO resultado = progresoService.crear(requestDTO);
 
         assertTrue(resultado.getEstado());
+        assertNotNull(resultado.getFechaCompletada());
 
-        assertNotNull(
-                resultado.getFechaCompletada()
-        );
-
-        verify(progresoRepository)
-                .save(any(Progreso.class));
+        verify(progresoRepository).save(any(Progreso.class));
     }
 
     // =========================================================
@@ -267,23 +215,13 @@ class ProgresoServiceTest {
 
     @Test
     void crear_UsuarioNoExiste_DebeLanzarExcepcion() {
-
         requestDTO.setIdUsuario(99L);
+        when(usuarioRepository.findById(99L)).thenReturn(Optional.empty());
 
-        when(usuarioRepository.findById(99L))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                ResourceNotFoundException.class,
-                () -> progresoService.crear(requestDTO)
-        );
+        assertThrows(ResourceNotFoundException.class, () -> progresoService.crear(requestDTO));
 
         verify(usuarioRepository).findById(99L);
-
-        verify(
-                progresoRepository,
-                never()
-        ).save(any(Progreso.class));
+        verify(progresoRepository, never()).save(any(Progreso.class));
     }
 
     // =========================================================
@@ -292,26 +230,36 @@ class ProgresoServiceTest {
 
     @Test
     void crear_LeccionNoExiste_DebeLanzarExcepcion() {
-
         requestDTO.setIdLeccion(99L);
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(leccionRepository.findById(99L)).thenReturn(Optional.empty());
 
-        when(usuarioRepository.findById(1L))
-                .thenReturn(Optional.of(usuario));
+        assertThrows(ResourceNotFoundException.class, () -> progresoService.crear(requestDTO));
 
-        when(leccionRepository.findById(99L))
-                .thenReturn(Optional.empty());
+        verify(leccionRepository).findById(99L);
+        verify(progresoRepository, never()).save(any(Progreso.class));
+    }
 
-        assertThrows(
-                ResourceNotFoundException.class,
+    // =========================================================
+    // INSCRIPCION
+    // =========================================================
+
+    @Test
+    void crear_SinInscripcionActiva_DebeLanzarReglaDeNegocio() {
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(leccionRepository.findById(1L)).thenReturn(Optional.of(leccion));
+        when(inscripcionRepository
+                .existsByUsuario_IdUsuarioAndCurso_IdCursoAndEstadoTrue(1L, 1L))
+                .thenReturn(false);
+
+        BusinessRuleException excepcion = assertThrows(
+                BusinessRuleException.class,
                 () -> progresoService.crear(requestDTO)
         );
 
-        verify(leccionRepository).findById(99L);
-
-        verify(
-                progresoRepository,
-                never()
-        ).save(any(Progreso.class));
+        assertEquals("El usuario no está inscrito en el curso de la lección",
+                excepcion.getMessage());
+        verify(progresoRepository, never()).save(any(Progreso.class));
     }
 
     // =========================================================
@@ -319,36 +267,22 @@ class ProgresoServiceTest {
     // =========================================================
 
     @Test
-    void crear_Duplicado_DebeLanzarExcepcion() {
-
-        when(usuarioRepository.findById(1L))
-                .thenReturn(Optional.of(usuario));
-
-        when(leccionRepository.findById(1L))
-                .thenReturn(Optional.of(leccion));
-
+    void crear_Duplicado_DebeLanzarReglaDeNegocio() {
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(leccionRepository.findById(1L)).thenReturn(Optional.of(leccion));
+        inscripcionActiva();
         when(progresoRepository
-                .existsByUsuario_IdUsuarioAndLeccion_IdLeccion(
-                        1L,
-                        1L
-                ))
+                .existsByUsuario_IdUsuarioAndLeccion_IdLeccion(1L, 1L))
                 .thenReturn(true);
 
-        IllegalArgumentException excepcion =
-                assertThrows(
-                        IllegalArgumentException.class,
-                        () -> progresoService.crear(requestDTO)
-                );
-
-        assertEquals(
-                "El usuario ya tiene un registro de progreso para esta leccion",
-                excepcion.getMessage()
+        BusinessRuleException excepcion = assertThrows(
+                BusinessRuleException.class,
+                () -> progresoService.crear(requestDTO)
         );
 
-        verify(
-                progresoRepository,
-                never()
-        ).save(any(Progreso.class));
+        assertEquals("El usuario ya tiene un registro de progreso para esta lección",
+                excepcion.getMessage());
+        verify(progresoRepository, never()).save(any(Progreso.class));
     }
 
     // =========================================================
@@ -357,37 +291,21 @@ class ProgresoServiceTest {
 
     @Test
     void actualizar_DePendienteACompletado_DebeGenerarFecha() {
-
         requestDTO.setEstado(true);
 
-        when(progresoRepository.findById(1L))
-                .thenReturn(Optional.of(progreso));
-
-        when(usuarioRepository.findById(1L))
-                .thenReturn(Optional.of(usuario));
-
-        when(leccionRepository.findById(1L))
-                .thenReturn(Optional.of(leccion));
-
+        when(progresoRepository.findById(1L)).thenReturn(Optional.of(progreso));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(leccionRepository.findById(1L)).thenReturn(Optional.of(leccion));
+        inscripcionActiva();
         when(progresoRepository.save(any(Progreso.class)))
-                .thenAnswer(invocation ->
-                        invocation.getArgument(0)
-                );
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        ProgresoResponseDTO resultado =
-                progresoService.actualizar(
-                        1L,
-                        requestDTO
-                );
+        ProgresoResponseDTO resultado = progresoService.actualizar(1L, requestDTO);
 
         assertTrue(resultado.getEstado());
+        assertNotNull(resultado.getFechaCompletada());
 
-        assertNotNull(
-                resultado.getFechaCompletada()
-        );
-
-        verify(progresoRepository)
-                .save(progreso);
+        verify(progresoRepository).save(progreso);
     }
 
     // =========================================================
@@ -396,43 +314,37 @@ class ProgresoServiceTest {
 
     @Test
     void actualizar_DeCompletadoAPendiente_DebeEliminarFecha() {
-
         progreso.setEstado(true);
-
-        progreso.setFechaCompletada(
-                LocalDateTime.now()
-        );
-
+        progreso.setFechaCompletada(LocalDateTime.now());
         requestDTO.setEstado(false);
 
-        when(progresoRepository.findById(1L))
-                .thenReturn(Optional.of(progreso));
-
-        when(usuarioRepository.findById(1L))
-                .thenReturn(Optional.of(usuario));
-
-        when(leccionRepository.findById(1L))
-                .thenReturn(Optional.of(leccion));
-
+        when(progresoRepository.findById(1L)).thenReturn(Optional.of(progreso));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(leccionRepository.findById(1L)).thenReturn(Optional.of(leccion));
+        inscripcionActiva();
         when(progresoRepository.save(any(Progreso.class)))
-                .thenAnswer(invocation ->
-                        invocation.getArgument(0)
-                );
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        ProgresoResponseDTO resultado =
-                progresoService.actualizar(
-                        1L,
-                        requestDTO
-                );
+        ProgresoResponseDTO resultado = progresoService.actualizar(1L, requestDTO);
 
         assertFalse(resultado.getEstado());
+        assertNull(resultado.getFechaCompletada());
 
-        assertNull(
-                resultado.getFechaCompletada()
-        );
+        verify(progresoRepository).save(progreso);
+    }
 
-        verify(progresoRepository)
-                .save(progreso);
+    @Test
+    void actualizar_SinInscripcionActiva_DebeLanzarReglaDeNegocio() {
+        when(progresoRepository.findById(1L)).thenReturn(Optional.of(progreso));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(leccionRepository.findById(1L)).thenReturn(Optional.of(leccion));
+        when(inscripcionRepository
+                .existsByUsuario_IdUsuarioAndCurso_IdCursoAndEstadoTrue(1L, 1L))
+                .thenReturn(false);
+
+        assertThrows(BusinessRuleException.class,
+                () -> progresoService.actualizar(1L, requestDTO));
+        verify(progresoRepository, never()).save(any(Progreso.class));
     }
 
     // =========================================================
@@ -441,34 +353,21 @@ class ProgresoServiceTest {
 
     @Test
     void eliminar_CuandoExiste_DebeEliminar() {
-
-        when(progresoRepository.findById(1L))
-                .thenReturn(Optional.of(progreso));
+        when(progresoRepository.findById(1L)).thenReturn(Optional.of(progreso));
 
         progresoService.eliminar(1L);
 
-        verify(progresoRepository)
-                .findById(1L);
-
-        verify(progresoRepository)
-                .delete(progreso);
+        verify(progresoRepository).findById(1L);
+        verify(progresoRepository).delete(progreso);
     }
 
     @Test
     void eliminar_CuandoNoExiste_DebeLanzarExcepcion() {
+        when(progresoRepository.findById(99L)).thenReturn(Optional.empty());
 
-        when(progresoRepository.findById(99L))
-                .thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> progresoService.eliminar(99L));
 
-        assertThrows(
-                ResourceNotFoundException.class,
-                () -> progresoService.eliminar(99L)
-        );
-
-        verify(
-                progresoRepository,
-                never()
-        ).delete(any(Progreso.class));
+        verify(progresoRepository, never()).delete(any(Progreso.class));
     }
 
     // =========================================================
@@ -477,45 +376,26 @@ class ProgresoServiceTest {
 
     @Test
     void listarPorEstudiante_DebeRetornarProgresos() {
+        when(usuarioRepository.existsById(1L)).thenReturn(true);
+        when(progresoRepository.findByUsuario_IdUsuario(1L)).thenReturn(List.of(progreso));
 
-        when(usuarioRepository.existsById(1L))
-                .thenReturn(true);
-
-        when(progresoRepository
-                .findByUsuario_IdUsuario(1L))
-                .thenReturn(List.of(progreso));
-
-        List<ProgresoResponseDTO> resultado =
-                progresoService.listarPorEstudiante(1L);
+        List<ProgresoResponseDTO> resultado = progresoService.listarPorEstudiante(1L);
 
         assertNotNull(resultado);
         assertEquals(1, resultado.size());
+        assertEquals(1L, resultado.get(0).getIdUsuario());
 
-        assertEquals(
-                1L,
-                resultado.get(0).getIdUsuario()
-        );
-
-        verify(progresoRepository)
-                .findByUsuario_IdUsuario(1L);
+        verify(progresoRepository).findByUsuario_IdUsuario(1L);
     }
 
     @Test
     void listarPorEstudiante_UsuarioNoExiste_DebeLanzarExcepcion() {
+        when(usuarioRepository.existsById(99L)).thenReturn(false);
 
-        when(usuarioRepository.existsById(99L))
-                .thenReturn(false);
+        assertThrows(ResourceNotFoundException.class,
+                () -> progresoService.listarPorEstudiante(99L));
 
-        assertThrows(
-                ResourceNotFoundException.class,
-                () -> progresoService
-                        .listarPorEstudiante(99L)
-        );
-
-        verify(
-                progresoRepository,
-                never()
-        ).findByUsuario_IdUsuario(anyLong());
+        verify(progresoRepository, never()).findByUsuario_IdUsuario(anyLong());
     }
 
     // =========================================================
@@ -524,40 +404,20 @@ class ProgresoServiceTest {
 
     @Test
     void listarPorEstudianteYCurso_DebeRetornarProgresos() {
-
-        when(usuarioRepository.existsById(1L))
-                .thenReturn(true);
-
-        when(cursoRepository.existsById(1L))
-                .thenReturn(true);
-
-        when(progresoRepository
-                .findByUsuario_IdUsuarioAndLeccion_Curso_IdCurso(
-                        1L,
-                        1L
-                ))
+        when(usuarioRepository.existsById(1L)).thenReturn(true);
+        when(cursoRepository.existsById(1L)).thenReturn(true);
+        when(progresoRepository.findByUsuario_IdUsuarioAndLeccion_Curso_IdCurso(1L, 1L))
                 .thenReturn(List.of(progreso));
 
         List<ProgresoResponseDTO> resultado =
-                progresoService
-                        .listarPorEstudianteYCurso(
-                                1L,
-                                1L
-                        );
+                progresoService.listarPorEstudianteYCurso(1L, 1L);
 
         assertNotNull(resultado);
         assertEquals(1, resultado.size());
-
-        assertEquals(
-                1L,
-                resultado.get(0).getIdCurso()
-        );
+        assertEquals(1L, resultado.get(0).getIdCurso());
 
         verify(progresoRepository)
-                .findByUsuario_IdUsuarioAndLeccion_Curso_IdCurso(
-                        1L,
-                        1L
-                );
+                .findByUsuario_IdUsuarioAndLeccion_Curso_IdCurso(1L, 1L);
     }
 
     // =========================================================
@@ -566,62 +426,25 @@ class ProgresoServiceTest {
 
     @Test
     void buscarPorUsuarioYLeccion_DebeRetornarProgreso() {
-
-        when(progresoRepository
-                .findByUsuario_IdUsuarioAndLeccion_IdLeccion(
-                        1L,
-                        1L
-                ))
+        when(progresoRepository.findByUsuario_IdUsuarioAndLeccion_IdLeccion(1L, 1L))
                 .thenReturn(Optional.of(progreso));
 
-        ProgresoResponseDTO resultado =
-                progresoService
-                        .buscarPorUsuarioYLeccion(
-                                1L,
-                                1L
-                        );
+        ProgresoResponseDTO resultado = progresoService.buscarPorUsuarioYLeccion(1L, 1L);
 
         assertNotNull(resultado);
+        assertEquals(1L, resultado.getIdProgreso());
+        assertEquals(1L, resultado.getIdUsuario());
+        assertEquals(1L, resultado.getIdLeccion());
 
-        assertEquals(
-                1L,
-                resultado.getIdProgreso()
-        );
-
-        assertEquals(
-                1L,
-                resultado.getIdUsuario()
-        );
-
-        assertEquals(
-                1L,
-                resultado.getIdLeccion()
-        );
-
-        verify(progresoRepository)
-                .findByUsuario_IdUsuarioAndLeccion_IdLeccion(
-                        1L,
-                        1L
-                );
+        verify(progresoRepository).findByUsuario_IdUsuarioAndLeccion_IdLeccion(1L, 1L);
     }
 
     @Test
     void buscarPorUsuarioYLeccion_NoExiste_DebeLanzarExcepcion() {
-
-        when(progresoRepository
-                .findByUsuario_IdUsuarioAndLeccion_IdLeccion(
-                        1L,
-                        99L
-                ))
+        when(progresoRepository.findByUsuario_IdUsuarioAndLeccion_IdLeccion(1L, 99L))
                 .thenReturn(Optional.empty());
 
-        assertThrows(
-                ResourceNotFoundException.class,
-                () -> progresoService
-                        .buscarPorUsuarioYLeccion(
-                                1L,
-                                99L
-                        )
-        );
+        assertThrows(ResourceNotFoundException.class,
+                () -> progresoService.buscarPorUsuarioYLeccion(1L, 99L));
     }
 }

@@ -22,4 +22,8 @@ public interface RespuestaRepository extends JpaRepository<Respuesta, Long> {
             """)
     List<Respuesta> buscar(@Param("idPregunta") Long idPregunta,
                            @Param("idUsuario") Long idUsuario);
+
+    boolean existsByPregunta_IdPregunta(Long idPregunta);
+
+    boolean existsByPregunta_IdPreguntaAndIdRespuestaNot(Long idPregunta, Long idRespuesta);
 }

@@ -7,7 +7,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080"
+      "value": "http://localhost:8081"
     },
     {
       "key": "idCurso",
@@ -15,6 +15,10 @@
     },
     {
       "key": "idLeccion",
+      "value": ""
+    },
+    {
+      "key": "idLeccionExistente",
       "value": "1"
     }
   ],
@@ -26,7 +30,19 @@
         "header": [],
         "url": "{{baseUrl}}/api/lecciones",
         "description": "Esperado: 200 OK y lista JSON."
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "GET - Filtrar por curso",
@@ -35,16 +51,48 @@
         "header": [],
         "url": "{{baseUrl}}/api/lecciones?idCurso={{idCurso}}",
         "description": "Esperado: 200 OK; las lecciones aparecen ordenadas por número de orden."
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Todas pertenecen al curso indicado\", function () {",
+              "    const idCurso = Number(pm.collectionVariables.get(\"idCurso\"));",
+              "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+              "    pm.response.json().forEach(l => pm.expect(l.idCurso).to.eql(idCurso));",
+              "});"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "GET - Obtener por ID",
       "request": {
         "method": "GET",
         "header": [],
-        "url": "{{baseUrl}}/api/lecciones/{{idLeccion}}",
+        "url": "{{baseUrl}}/api/lecciones/{{idLeccionExistente}}",
         "description": "Esperado: 200 OK si existe; 404 si no existe."
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"La respuesta trae idLeccion y titulo\", function () {",
+              "    const j = pm.response.json();",
+              "    pm.expect(j).to.have.property(\"idLeccion\");",
+              "    pm.expect(j.titulo).to.be.a(\"string\");",
+              "});"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "POST - Crear lección",
@@ -60,14 +108,32 @@
         "description": "El curso indicado debe existir. Esperado: 201 Created.",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"titulo\": \"Introducción a Java\",\n  \"contenido\": \"Conceptos básicos de programación en Java.\",\n  \"orden\": 1,\n  \"idCurso\": {{idCurso}}\n}",
+          "raw": "{\n  \"titulo\": \"Introducción a Java\",\n  \"contenido\": \"Conceptos básicos de programación en Java.\",\n  \"orden\": 3,\n  \"idCurso\": {{idCurso}}\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code es 201\", function () { pm.response.to.have.status(201); });",
+              "pm.test(\"La respuesta trae idLeccion\", function () {",
+              "    const j = pm.response.json();",
+              "    pm.expect(j).to.have.property(\"idLeccion\");",
+              "    pm.expect(j.idLeccion).to.be.a(\"number\");",
+              "    pm.expect(j.titulo).to.eql(\"Introducción a Java\");",
+              "    pm.collectionVariables.set(\"idLeccion\", String(j.idLeccion));",
+              "});"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "POST - Validación título vacío",
@@ -90,7 +156,21 @@
             }
           }
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code es 400\", function () { pm.response.to.have.status(400); });",
+              "pm.test(\"El error indica validación\", function () {",
+              "    pm.expect(pm.response.json()).to.have.property(\"mensaje\");",
+              "});"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "POST - Curso inexistente",
@@ -113,7 +193,21 @@
             }
           }
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code es 404\", function () { pm.response.to.have.status(404); });",
+              "pm.test(\"El error indica que no existe el curso\", function () {",
+              "    pm.expect(pm.response.json()).to.have.property(\"mensaje\");",
+              "});"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "PUT - Actualizar lección",
@@ -129,14 +223,31 @@
         "description": "Esperado: 200 OK. El orden no puede repetirse dentro del mismo curso.",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"titulo\": \"Introducción a Java actualizada\",\n  \"contenido\": \"Contenido actualizado.\",\n  \"orden\": 1,\n  \"idCurso\": {{idCurso}}\n}",
+          "raw": "{\n  \"titulo\": \"Introducción a Java actualizada\",\n  \"contenido\": \"Contenido actualizado.\",\n  \"orden\": 3,\n  \"idCurso\": {{idCurso}}\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"La lección se actualizó\", function () {",
+              "    const j = pm.response.json();",
+              "    pm.expect(j).to.have.property(\"idLeccion\");",
+              "    pm.expect(j.titulo).to.eql(\"Introducción a Java actualizada\");",
+              "    pm.expect(j.orden).to.eql(3);",
+              "});"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "DELETE - Eliminar lección",
@@ -145,7 +256,18 @@
         "header": [],
         "url": "{{baseUrl}}/api/lecciones/{{idLeccion}}",
         "description": "Esperado: 204 No Content."
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code es 204\", function () { pm.response.to.have.status(204); });"
+            ]
+          }
+        }
+      ]
     }
   ]
 }

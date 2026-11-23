@@ -3,6 +3,8 @@ package com.ues.api_cursos_online.controller;
 import com.ues.api_cursos_online.dto.LeccionRequestDTO;
 import com.ues.api_cursos_online.dto.LeccionResponseDTO;
 import com.ues.api_cursos_online.service.LeccionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import java.util.List;
 
 /** Endpoints REST del recurso Lección: /api/lecciones. */
 @RestController
+@Tag(name = "Lecciones", description = "CU04 - Gestión de lecciones de un curso")
 @RequestMapping("/api/lecciones")
 @RequiredArgsConstructor
 @Validated
@@ -35,6 +38,8 @@ public class LeccionController {
             @PathVariable @Positive Long id) {
         return ResponseEntity.ok(leccionService.obtenerPorId(id));
     }
+
+    @Operation(summary = "Crear una lección (CU04)")
 
     @PostMapping
     public ResponseEntity<LeccionResponseDTO> crear(

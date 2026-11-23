@@ -5,6 +5,7 @@ import com.ues.api_cursos_online.dto.InscripcionResponseDTO;
 import com.ues.api_cursos_online.entity.Curso;
 import com.ues.api_cursos_online.entity.Inscripcion;
 import com.ues.api_cursos_online.entity.Usuario;
+import com.ues.api_cursos_online.exception.BusinessRuleException;
 import com.ues.api_cursos_online.exception.ResourceNotFoundException;
 import com.ues.api_cursos_online.repository.CursoRepository;
 import com.ues.api_cursos_online.repository.InscripcionRepository;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -20,292 +22,174 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class InscripcionService {
 
+    private static final String ROL_ESTUDIANTE = "ESTUDIANTE";
+
     private final InscripcionRepository inscripcionRepository;
     private final UsuarioRepository usuarioRepository;
     private final CursoRepository cursoRepository;
 
-    /**
-     * Lista todas las inscripciones.
-     */
     public List<InscripcionResponseDTO> listar() {
-
         return inscripcionRepository.findAll()
                 .stream()
                 .map(this::toDTO)
                 .toList();
     }
 
-    /**
-     * Busca una inscripción por ID.
-     */
     public InscripcionResponseDTO buscarPorId(Long id) {
-
-        Inscripcion inscripcion = buscarEntidad(id);
-
-        return toDTO(inscripcion);
+        return toDTO(buscarEntidad(id));
     }
 
-    /**
-     * Crea una nueva inscripción.
-     */
     @Transactional
-    public InscripcionResponseDTO crear(
-            InscripcionRequestDTO dto
-    ) {
-
-        Usuario usuario = usuarioRepository
-                .findById(dto.getIdUsuario())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Usuario",
-                                dto.getIdUsuario()
-                        )
-                );
-
-        Curso curso = cursoRepository
-                .findById(dto.getIdCurso())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Curso",
-                                dto.getIdCurso()
-                        )
-                );
+    public InscripcionResponseDTO crear(InscripcionRequestDTO dto) {
+        Usuario usuario = obtenerEstudianteActivo(dto.getIdUsuario());
+        Curso curso = obtenerCursoActivo(dto.getIdCurso());
 
         /*
-         * Evita que el mismo usuario se inscriba
-         * dos veces en el mismo curso.
+         * Si el estudiante se dio de baja antes, se reactiva la inscripción
+         * existente. Así se conserva el historial y se respeta el UNIQUE
+         * (idUsuario, idCurso) de la base de datos.
          */
-        boolean yaInscrito =
-                inscripcionRepository
-                        .existsByUsuario_IdUsuarioAndCurso_IdCurso(
-                                dto.getIdUsuario(),
-                                dto.getIdCurso()
-                        );
+        var inscripcionAnterior = inscripcionRepository
+                .findByUsuario_IdUsuarioAndCurso_IdCurso(dto.getIdUsuario(), dto.getIdCurso());
 
-        if (yaInscrito) {
-
-            throw new IllegalArgumentException(
-                    "El usuario ya está inscrito en este curso"
-            );
+        if (inscripcionAnterior.isPresent()) {
+            Inscripcion anterior = inscripcionAnterior.get();
+            if (Boolean.TRUE.equals(anterior.getEstado())) {
+                throw new BusinessRuleException("El usuario ya está inscrito en este curso");
+            }
+            anterior.setEstado(true);
+            anterior.setFechaInscripcion(LocalDateTime.now());
+            return toDTO(inscripcionRepository.save(anterior));
         }
 
-        Inscripcion inscripcion =
-                Inscripcion.builder()
-                        .usuario(usuario)
-                        .curso(curso)
-                        .build();
+        Inscripcion inscripcion = Inscripcion.builder()
+                .usuario(usuario)
+                .curso(curso)
+                .estado(true)
+                .fechaInscripcion(LocalDateTime.now())
+                .build();
 
-        Inscripcion guardada =
-                inscripcionRepository.save(inscripcion);
-
-        return toDTO(guardada);
+        return toDTO(inscripcionRepository.save(inscripcion));
     }
 
-    /**
-     * Actualiza una inscripción existente.
-     */
     @Transactional
-    public InscripcionResponseDTO actualizar(
-            Long id,
-            InscripcionRequestDTO dto
-    ) {
+    public InscripcionResponseDTO actualizar(Long id, InscripcionRequestDTO dto) {
+        Inscripcion inscripcion = buscarEntidad(id);
 
-        Inscripcion inscripcion =
-                buscarEntidad(id);
+        Usuario usuario = obtenerEstudianteActivo(dto.getIdUsuario());
+        Curso curso = obtenerCursoActivo(dto.getIdCurso());
 
-        Usuario usuario = usuarioRepository
-                .findById(dto.getIdUsuario())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Usuario",
-                                dto.getIdUsuario()
-                        )
-                );
+        boolean cambioUsuario = !inscripcion.getUsuario().getIdUsuario().equals(dto.getIdUsuario());
+        boolean cambioCurso = !inscripcion.getCurso().getIdCurso().equals(dto.getIdCurso());
 
-        Curso curso = cursoRepository
-                .findById(dto.getIdCurso())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Curso",
-                                dto.getIdCurso()
-                        )
-                );
-
-        /*
-         * Comprobamos si realmente se está intentando
-         * cambiar el usuario o el curso.
-         */
-        boolean cambioUsuario =
-                !inscripcion
-                        .getUsuario()
-                        .getIdUsuario()
-                        .equals(dto.getIdUsuario());
-
-        boolean cambioCurso =
-                !inscripcion
-                        .getCurso()
-                        .getIdCurso()
-                        .equals(dto.getIdCurso());
-
-        /*
-         * Si cambia alguna de las relaciones,
-         * verificamos que la combinación no exista.
-         */
         if (cambioUsuario || cambioCurso) {
-
-            boolean existe =
-                    inscripcionRepository
-                            .existsByUsuario_IdUsuarioAndCurso_IdCurso(
-                                    dto.getIdUsuario(),
-                                    dto.getIdCurso()
-                            );
-
+            boolean existe = inscripcionRepository
+                    .existsByUsuario_IdUsuarioAndCurso_IdCursoAndEstadoTrue(
+                            dto.getIdUsuario(), dto.getIdCurso());
             if (existe) {
-
-                throw new IllegalArgumentException(
-                        "El usuario ya está inscrito en este curso"
-                );
+                throw new BusinessRuleException("El usuario ya está inscrito en este curso");
             }
         }
 
         inscripcion.setUsuario(usuario);
         inscripcion.setCurso(curso);
-
-        Inscripcion actualizada =
-                inscripcionRepository.save(inscripcion);
-
-        return toDTO(actualizada);
+        return toDTO(inscripcionRepository.save(inscripcion));
     }
 
-    /**
-     * Elimina una inscripción por ID.
-     */
+    /** CU13 - Registrar la baja de un curso (baja lógica). */
+    @Transactional
+    public InscripcionResponseDTO darDeBaja(Long id) {
+        Inscripcion inscripcion = buscarEntidad(id);
+        if (!Boolean.TRUE.equals(inscripcion.getEstado())) {
+            throw new BusinessRuleException("La inscripción ya estaba dada de baja");
+        }
+        inscripcion.setEstado(false);
+        return toDTO(inscripcionRepository.save(inscripcion));
+    }
+
+    @Transactional
+    public InscripcionResponseDTO reactivar(Long id) {
+        Inscripcion inscripcion = buscarEntidad(id);
+        inscripcion.setEstado(true);
+        return toDTO(inscripcionRepository.save(inscripcion));
+    }
+
+    /** Eliminación física disponible para el administrador. */
     @Transactional
     public void eliminar(Long id) {
-
-        Inscripcion inscripcion =
-                buscarEntidad(id);
-
-        inscripcionRepository.delete(inscripcion);
+        inscripcionRepository.delete(buscarEntidad(id));
     }
 
-    /**
-     * Obtiene los cursos de un estudiante
-     * a través de sus inscripciones.
-     */
-    public List<InscripcionResponseDTO> listarPorEstudiante(
-            Long idUsuario
-    ) {
+    public List<InscripcionResponseDTO> listarPorEstudiante(Long idUsuario) {
+        return listarPorEstudiante(idUsuario, false);
+    }
 
+    public List<InscripcionResponseDTO> listarPorEstudiante(Long idUsuario, boolean incluirInactivas) {
         if (!usuarioRepository.existsById(idUsuario)) {
-
-            throw new ResourceNotFoundException(
-                    "Usuario",
-                    idUsuario
-            );
+            throw new ResourceNotFoundException("Usuario", idUsuario);
         }
-
-        return inscripcionRepository
-                .findByUsuario_IdUsuario(idUsuario)
-                .stream()
-                .map(this::toDTO)
-                .toList();
+        List<Inscripcion> inscripciones = incluirInactivas
+                ? inscripcionRepository.findByUsuario_IdUsuario(idUsuario)
+                : inscripcionRepository.findByUsuario_IdUsuarioAndEstadoTrue(idUsuario);
+        return inscripciones.stream().map(this::toDTO).toList();
     }
 
-    /**
-     * Obtiene los estudiantes inscritos
-     * en un curso.
-     */
-    public List<InscripcionResponseDTO> listarPorCurso(
-            Long idCurso
-    ) {
+    public List<InscripcionResponseDTO> listarPorCurso(Long idCurso) {
+        return listarPorCurso(idCurso, false);
+    }
 
+    public List<InscripcionResponseDTO> listarPorCurso(Long idCurso, boolean incluirInactivas) {
         if (!cursoRepository.existsById(idCurso)) {
-
-            throw new ResourceNotFoundException(
-                    "Curso",
-                    idCurso
-            );
+            throw new ResourceNotFoundException("Curso", idCurso);
         }
-
-        return inscripcionRepository
-                .findByCurso_IdCurso(idCurso)
-                .stream()
-                .map(this::toDTO)
-                .toList();
+        List<Inscripcion> inscripciones = incluirInactivas
+                ? inscripcionRepository.findByCurso_IdCurso(idCurso)
+                : inscripcionRepository.findByCurso_IdCursoAndEstadoTrue(idCurso);
+        return inscripciones.stream().map(this::toDTO).toList();
     }
 
-    /**
-     * Busca internamente una inscripción por ID.
-     */
+    /** Verifica que un estudiante activo esté inscrito en un curso. */
+    public boolean estaInscritoActivo(Long idUsuario, Long idCurso) {
+        return inscripcionRepository
+                .existsByUsuario_IdUsuarioAndCurso_IdCursoAndEstadoTrue(idUsuario, idCurso);
+    }
+
+    private Usuario obtenerEstudianteActivo(Long idUsuario) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", idUsuario));
+        if (!ROL_ESTUDIANTE.equals(usuario.getRol().getNombreRol())) {
+            throw new BusinessRuleException("El usuario con id " + idUsuario + " no tiene rol ESTUDIANTE");
+        }
+        if (!Boolean.TRUE.equals(usuario.getEstado())) {
+            throw new BusinessRuleException("El estudiante con id " + idUsuario + " está desactivado");
+        }
+        return usuario;
+    }
+
+    private Curso obtenerCursoActivo(Long idCurso) {
+        Curso curso = cursoRepository.findById(idCurso)
+                .orElseThrow(() -> new ResourceNotFoundException("Curso", idCurso));
+        if (!Boolean.TRUE.equals(curso.getEstado())) {
+            throw new BusinessRuleException("El curso con id " + idCurso + " está desactivado");
+        }
+        return curso;
+    }
+
     private Inscripcion buscarEntidad(Long id) {
-
-        return inscripcionRepository
-                .findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Inscripcion",
-                                id
-                        )
-                );
+        return inscripcionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Inscripcion", id));
     }
 
-    /**
-     * Convierte una entidad Inscripcion
-     * en InscripcionResponseDTO.
-     */
-    private InscripcionResponseDTO toDTO(
-            Inscripcion inscripcion
-    ) {
-
-        InscripcionResponseDTO dto =
-                new InscripcionResponseDTO();
-
-        dto.setIdInscripcion(
-                inscripcion.getIdInscripcion()
-        );
-
-        // Usuario
-        dto.setIdUsuario(
-                inscripcion
-                        .getUsuario()
-                        .getIdUsuario()
-        );
-
-        dto.setNombreUsuario(
-                inscripcion
-                        .getUsuario()
-                        .getNombreUsuario()
-        );
-
-        dto.setApellidoUsuario(
-                inscripcion
-                        .getUsuario()
-                        .getApellidoUsuario()
-        );
-
-        // Curso
-        dto.setIdCurso(
-                inscripcion
-                        .getCurso()
-                        .getIdCurso()
-        );
-
-        dto.setNombreCurso(
-                inscripcion
-                        .getCurso()
-                        .getNombreCurso()
-        );
-
-        // Datos de inscripción
-        dto.setFechaInscripcion(
-                inscripcion.getFechaInscripcion()
-        );
-
-        dto.setEstado(
-                inscripcion.getEstado()
-        );
-
+    private InscripcionResponseDTO toDTO(Inscripcion inscripcion) {
+        InscripcionResponseDTO dto = new InscripcionResponseDTO();
+        dto.setIdInscripcion(inscripcion.getIdInscripcion());
+        dto.setIdUsuario(inscripcion.getUsuario().getIdUsuario());
+        dto.setNombreUsuario(inscripcion.getUsuario().getNombreUsuario());
+        dto.setApellidoUsuario(inscripcion.getUsuario().getApellidoUsuario());
+        dto.setIdCurso(inscripcion.getCurso().getIdCurso());
+        dto.setNombreCurso(inscripcion.getCurso().getNombreCurso());
+        dto.setFechaInscripcion(inscripcion.getFechaInscripcion());
+        dto.setEstado(inscripcion.getEstado());
         return dto;
     }
 }

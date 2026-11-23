@@ -3,6 +3,8 @@ package com.ues.api_cursos_online.controller;
 import com.ues.api_cursos_online.dto.CalificacionRequestDTO;
 import com.ues.api_cursos_online.dto.CalificacionResponseDTO;
 import com.ues.api_cursos_online.service.CalificacionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import java.util.List;
 
 /** Endpoints REST del recurso Calificación: /api/calificaciones */
 @RestController
+@Tag(name = "Calificaciones", description = "CU18 - Registro y consulta de notas")
 @RequestMapping("/api/calificaciones")
 @RequiredArgsConstructor
 @Validated
@@ -24,6 +27,7 @@ public class CalificacionController {
     private final CalificacionService calificacionService;
 
     /** GET /api/calificaciones?idUsuario=4&idEvaluacion=1 (filtros opcionales) */
+    @Operation(summary = "Listar calificaciones (con filtros opcionales)")
     @GetMapping
     public ResponseEntity<List<CalificacionResponseDTO>> listar(
             @RequestParam(required = false) @Positive Long idUsuario,
@@ -38,6 +42,7 @@ public class CalificacionController {
     }
 
     /** POST /api/calificaciones */
+    @Operation(summary = "Registrar una calificación (CU18)")
     @PostMapping
     public ResponseEntity<CalificacionResponseDTO> crear(@Valid @RequestBody CalificacionRequestDTO dto) {
         CalificacionResponseDTO creada = calificacionService.crear(dto);

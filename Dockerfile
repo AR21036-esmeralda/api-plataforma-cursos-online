@@ -1,23 +1,34 @@
-# Etapa 1: Construcción con Gradle y Java 21
-FROM gradle:8.10-jdk21-alpine AS builder
+# Etapa 1: construcción con el wrapper de Gradle incluido en el repositorio.
+# El wrapper fija Gradle 9.7.1 en gradle/wrapper/gradle-wrapper.properties,
+# por eso NO se usa una imagen gradle:<version> que pueda desincronizarse.
+FROM eclipse-temurin:21-jdk-alpine AS builder
+
+RUN apk add --no-cache bash ca-certificates
+
 WORKDIR /app
 
-COPY gradlew .
+# Copiar primero los archivos del wrapper y del build para aprovechar la caché de capas.
+COPY gradlew gradlew.bat ./
 COPY gradle gradle
 COPY build.gradle settings.gradle ./
+# El wrapper no tiene permiso de ejecución en el repositorio: siempre invocarlo con bash.
 RUN chmod +x gradlew
-
-# Descarga dependencias primero para aprovechar la caché de Docker
-RUN ./gradlew dependencies --no-daemon || true
+RUN bash gradlew --version --no-daemon
 
 COPY src src
-RUN ./gradlew bootJar -x test --no-daemon
 
-# Etapa 2: Imagen final ligera de ejecución
+# bootJar genera el jar ejecutable. Si falla, la capa falla (sin `|| true`).
+RUN bash gradlew clean bootJar --no-daemon \
+    && test -f build/libs/api-cursos-online-0.0.1-SNAPSHOT.jar \
+    && cp build/libs/api-cursos-online-0.0.1-SNAPSHOT.jar /app/api.jar
+
+# Etapa 2: imagen final ligera de ejecución (solo JRE).
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-COPY --from=builder /app/build/libs/*.jar app.jar
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=builder /app/api.jar app.jar
 
+USER app
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]

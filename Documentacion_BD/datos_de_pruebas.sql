@@ -15,12 +15,12 @@ INSERT INTO CATEGORIA (nombreCategoria, descripcion) VALUES
 
 -- 3. USUARIOS 
 INSERT INTO USUARIO (nombreUsuario, apellidoUsuario, email, password, idRol) VALUES 
-('Carlos', 'Mendoza', 'admin@plataforma.com', '$2b$10$_admin', 1),
-('Ana', 'Martínez', 'ana.martinez@profesor.com', '$2b$10$d_ana', 2),
-('Roberto', 'Gómez', 'roberto.gomez@profesor.com', '$2b$10$_roberto', 2),
-('Lucía', 'Fernández', 'lucia.f@estudiante.com', '$2b$10$_lucia', 3),
-('Diego', 'Torres', 'diego.t@estudiante.com', '$2b$10$_diego', 3),
-('Elena', 'Ramírez', 'elena.r@estudiante.com', '$2b$10$_elena', 3);
+('Carlos', 'Mendoza', 'admin@plataforma.com', '$2b$10$u7bTesWCrRGRaUcQWW4MiO9/0H1Q7gxmNfsCWlroOR8NwHbR9Qh0m', 1),
+('Ana', 'Martínez', 'ana.martinez@profesor.com', '$2b$10$1mYATci7KXfxhEzXefCEe.K7Wi9ZfFL.Cr6r7HR2oGUeEEbaK4ode', 2),
+('Roberto', 'Gómez', 'roberto.gomez@profesor.com', '$2b$10$1mYATci7KXfxhEzXefCEe.K7Wi9ZfFL.Cr6r7HR2oGUeEEbaK4ode', 2),
+('Lucía', 'Fernández', 'lucia.f@estudiante.com', '$2b$10$2MTfq.oDn3pFdWwOpP5Fm.XCEmtKd98.Ny.spKgQK2Jx0uIpVYfu2', 3),
+('Diego', 'Torres', 'diego.t@estudiante.com', '$2b$10$2MTfq.oDn3pFdWwOpP5Fm.XCEmtKd98.Ny.spKgQK2Jx0uIpVYfu2', 3),
+('Elena', 'Ramírez', 'elena.r@estudiante.com', '$2b$10$2MTfq.oDn3pFdWwOpP5Fm.XCEmtKd98.Ny.spKgQK2Jx0uIpVYfu2', 3);
 
 -- 4. CURSOS 
 
@@ -60,15 +60,22 @@ INSERT INTO RESPUESTA (idPregunta, idUsuario, contenido) VALUES
 (2, 3, 'La 3FN se aplica para eliminar dependencias transitivas entre campos no clave.');
 
 -- 10. EVALUACIONES 
-INSERT INTO EVALUACION (titulo, descripcion, idCurso) VALUES 
-('Evaluación Final de Desarrollo Web', 'Examen teórico y práctico sobre HTML, CSS y JS.', 1),
-('Evaluación Final de PostgreSQL', 'Examen práctico de diseño de tablas y SQL.', 2);
+INSERT INTO EVALUACION (titulo, descripcion, fechaLimite, idCurso) VALUES
+('Evaluación Final de Desarrollo Web', 'Examen teórico y práctico sobre HTML, CSS y JS.', CURRENT_TIMESTAMP + INTERVAL '30 days', 1),
+('Evaluación Parcial de Desarrollo Web', 'Examen corto sobre HTML y CSS.', CURRENT_TIMESTAMP + INTERVAL '15 days', 1),
+('Evaluación Final de PostgreSQL', 'Examen práctico de diseño de tablas y SQL.', CURRENT_TIMESTAMP + INTERVAL '30 days', 2);
 
 -- 11. CALIFICACIONES
 INSERT INTO CALIFICACION (idUsuario, idEvaluacion, nota) VALUES 
 (4, 1, 9.50),
 (5, 1, 7.80),
-(4, 2, 10.00);
+(4, 3, 10.00);
+
+-- 12. EVALUACIONES REALIZADAS (CU10)
+INSERT INTO INTENTO_EVALUACION (idUsuario, idEvaluacion) VALUES
+(4, 1),
+(5, 1),
+(4, 3);
 
 
 

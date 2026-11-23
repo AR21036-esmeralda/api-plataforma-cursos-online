@@ -3,6 +3,8 @@ package com.ues.api_cursos_online.controller;
 import com.ues.api_cursos_online.dto.CursoRequestDTO;
 import com.ues.api_cursos_online.dto.CursoResponseDTO;
 import com.ues.api_cursos_online.service.CursoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import java.util.List;
 
 /** Endpoints REST del recurso Curso: /api/cursos */
 @RestController
+@Tag(name = "Cursos", description = "CU03, CU22 - Gestión de cursos")
 @RequestMapping("/api/cursos")
 @RequiredArgsConstructor
 public class CursoController {
@@ -36,6 +39,7 @@ public class CursoController {
     }
 
     /** POST /api/cursos */
+    @Operation(summary = "Crear un curso (CU03)")
     @PostMapping
     public ResponseEntity<CursoResponseDTO> crear(@Valid @RequestBody CursoRequestDTO dto) {
         CursoResponseDTO creado = cursoService.crear(dto);
@@ -49,6 +53,28 @@ public class CursoController {
     public ResponseEntity<CursoResponseDTO> actualizar(@PathVariable Long id,
                                                        @Valid @RequestBody CursoRequestDTO dto) {
         return ResponseEntity.ok(cursoService.actualizar(id, dto));
+    }
+
+    /** PATCH /api/cursos/{id}/profesor/{idProfesor} - asignar o cambiar profesor (CU22) */
+    @Operation(summary = "Asignar o cambiar el profesor del curso (CU22)")
+    @PatchMapping("/{id}/profesor/{idProfesor}")
+    public ResponseEntity<CursoResponseDTO> asignarProfesor(@PathVariable Long id,
+                                                            @PathVariable Long idProfesor) {
+        return ResponseEntity.ok(cursoService.asignarProfesor(id, idProfesor));
+    }
+
+    /** PATCH /api/cursos/{id}/desactivar */
+    @Operation(summary = "Desactivar un curso (CU22)")
+    @PatchMapping("/{id}/desactivar")
+    public ResponseEntity<CursoResponseDTO> desactivar(@PathVariable Long id) {
+        return ResponseEntity.ok(cursoService.desactivar(id));
+    }
+
+    /** PATCH /api/cursos/{id}/activar */
+    @Operation(summary = "Activar un curso (CU22)")
+    @PatchMapping("/{id}/activar")
+    public ResponseEntity<CursoResponseDTO> activar(@PathVariable Long id) {
+        return ResponseEntity.ok(cursoService.activar(id));
     }
 
     /** DELETE /api/cursos/{id} */

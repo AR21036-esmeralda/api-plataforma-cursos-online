@@ -1,12 +1,18 @@
+# PostgreSQL para la plataforma de cursos.
+# No se define `namespace` porque el resto de los manifiestos tampoco lo usa.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres-db
+  labels:
+    app: postgres
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: postgres
+  strategy:
+    type: Recreate  # el PVC es ReadWriteOnce: no conviene tener dos pods montándolo
   template:
     metadata:
       labels:
@@ -16,22 +22,67 @@ spec:
         - name: postgres
           image: postgres:16-alpine
           ports:
-            - containerPort: 5432
+            - name: postgres
+              containerPort: 5432
           env:
             - name: POSTGRES_DB
               value: plataforma_cursos_online
             - name: POSTGRES_USER
               value: postgres
             - name: POSTGRES_PASSWORD
-              value: postgres
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: POSTGRES_PASSWORD
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", "plataforma_cursos_online"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", "plataforma_cursos_online"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           volumeMounts:
             - name: init-sql
+              # Los scripts 01_schema.sql y 02_datos.sql inicializan la BD la primera vez.
               mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
       volumes:
         - name: init-sql
           configMap:
             name: db-init-sql
-            optional: true
+            # Obligatorio: sin el ConfigMap la BD arranca vacía y `ddl-auto=validate`
+            # impediría que la API arranque. Ver k8s/db-init-configmap.yaml.
+            optional: false
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
 ---
 apiVersion: v1
 kind: Service
@@ -41,5 +92,6 @@ spec:
   selector:
     app: postgres
   ports:
-    - port: 5432
+    - name: postgres
+      port: 5432
       targetPort: 5432

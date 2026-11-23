@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 /** Datos de entrada para crear o actualizar una evaluación. */
 @Data
 @Builder
@@ -22,6 +24,9 @@ public class EvaluacionRequestDTO {
 
     @Size(max = 1000, message = "La descripción no puede exceder 1000 caracteres")
     private String descripcion;
+
+    /** Fecha límite para realizar la evaluación (consigna, clase Evaluación). */
+    private LocalDateTime fechaLimite;
 
     @NotNull(message = "El curso es obligatorio")
     @Positive(message = "El id del curso debe ser positivo")

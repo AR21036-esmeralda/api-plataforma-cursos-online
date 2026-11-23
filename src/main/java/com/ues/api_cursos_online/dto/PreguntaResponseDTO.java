@@ -18,6 +18,9 @@ public class PreguntaResponseDTO {
     private String nombreEstudiante;
     private Long idLeccion;
     private String tituloLeccion;
+    /** Curso al que pertenece la lección (CU14). */
+    private Long idCurso;
+    private String nombreCurso;
     private String contenido;
     private LocalDateTime fecha;
 }

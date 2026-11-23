@@ -3,9 +3,11 @@ package com.ues.api_cursos_online.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 /**
  * Evaluación de un curso. Tabla EVALUACION.
- * Cada curso puede tener como máximo una evaluación (relación 1:1 con Curso).
+ * Un curso puede contener cero o muchas evaluaciones (1 : 0..* según la consigna).
  */
 @Entity
 @Table(name = "evaluacion")
@@ -27,7 +29,10 @@ public class Evaluacion {
     @Column(name = "descripcion", length = 1000)
     private String descripcion;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "idcurso", nullable = false, unique = true)
+    @Column(name = "fechalimite")
+    private LocalDateTime fechaLimite;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "idcurso", nullable = false)
     private Curso curso;
 }

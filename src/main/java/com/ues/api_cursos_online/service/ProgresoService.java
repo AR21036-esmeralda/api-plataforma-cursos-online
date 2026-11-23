@@ -5,8 +5,10 @@ import com.ues.api_cursos_online.dto.ProgresoResponseDTO;
 import com.ues.api_cursos_online.entity.Leccion;
 import com.ues.api_cursos_online.entity.Progreso;
 import com.ues.api_cursos_online.entity.Usuario;
+import com.ues.api_cursos_online.exception.BusinessRuleException;
 import com.ues.api_cursos_online.exception.ResourceNotFoundException;
 import com.ues.api_cursos_online.repository.CursoRepository;
+import com.ues.api_cursos_online.repository.InscripcionRepository;
 import com.ues.api_cursos_online.repository.LeccionRepository;
 import com.ues.api_cursos_online.repository.ProgresoRepository;
 import com.ues.api_cursos_online.repository.UsuarioRepository;
@@ -26,6 +28,7 @@ public class ProgresoService {
     private final UsuarioRepository usuarioRepository;
     private final LeccionRepository leccionRepository;
     private final CursoRepository cursoRepository;
+    private final InscripcionRepository inscripcionRepository;
 
     /**
      * Lista todos los registros de progreso.
@@ -72,6 +75,9 @@ public class ProgresoService {
                         )
                 );
 
+        // CU08: solo se puede registrar progreso en un curso inscrito.
+        validarInscripcion(dto.getIdUsuario(), leccion);
+
         /*
          * Evita que un usuario tenga dos registros
          * de progreso para la misma lección.
@@ -85,8 +91,8 @@ public class ProgresoService {
 
         if (existe) {
 
-            throw new IllegalArgumentException(
-                    "El usuario ya tiene un registro de progreso para esta leccion"
+            throw new BusinessRuleException(
+                    "El usuario ya tiene un registro de progreso para esta lección"
             );
         }
 
@@ -142,6 +148,9 @@ public class ProgresoService {
                         )
                 );
 
+        // CU08: la relación usuario-lección debe corresponder a una inscripción activa.
+        validarInscripcion(dto.getIdUsuario(), leccion);
+
         /*
          * Comprobamos si cambia el usuario o la lección.
          */
@@ -170,8 +179,8 @@ public class ProgresoService {
 
             if (duplicado) {
 
-                throw new IllegalArgumentException(
-                        "El usuario ya tiene un registro de progreso para esta leccion"
+                throw new BusinessRuleException(
+                        "El usuario ya tiene un registro de progreso para esta lección"
                 );
             }
         }
@@ -304,12 +313,24 @@ public class ProgresoService {
                         )
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
-                                        "Progreso",
+                                        "Progreso para el usuario " + idUsuario
+                                                + " y la lección " + idLeccion,
                                         idLeccion
                                 )
                         );
 
         return toDTO(progreso);
+    }
+
+    /** Verifica que el usuario esté inscrito activamente en el curso de la lección. */
+    private void validarInscripcion(Long idUsuario, Leccion leccion) {
+        Long idCurso = leccion.getCurso().getIdCurso();
+        boolean inscrito = inscripcionRepository
+                .existsByUsuario_IdUsuarioAndCurso_IdCursoAndEstadoTrue(idUsuario, idCurso);
+        if (!inscrito) {
+            throw new BusinessRuleException(
+                    "El usuario no está inscrito en el curso de la lección");
+        }
     }
 
     /**

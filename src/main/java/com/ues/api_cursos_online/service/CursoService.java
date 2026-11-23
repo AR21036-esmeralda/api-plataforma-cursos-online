@@ -81,6 +81,29 @@ public class CursoService {
     }
 
     @Transactional
+    public CursoResponseDTO asignarProfesor(Long id, Long idProfesor) {
+        Curso curso = buscarCurso(id);
+        curso.setProfesor(obtenerProfesorActivo(idProfesor));
+        return cursoMapper.toResponse(cursoRepository.save(curso));
+    }
+
+    @Transactional
+    public CursoResponseDTO desactivar(Long id) {
+        return cambiarEstado(id, false);
+    }
+
+    @Transactional
+    public CursoResponseDTO activar(Long id) {
+        return cambiarEstado(id, true);
+    }
+
+    private CursoResponseDTO cambiarEstado(Long id, boolean estado) {
+        Curso curso = buscarCurso(id);
+        curso.setEstado(estado);
+        return cursoMapper.toResponse(cursoRepository.save(curso));
+    }
+
+    @Transactional
     public void eliminar(Long id) {
         // Las lecciones, evaluaciones e inscripciones se eliminan en cascada (ON DELETE CASCADE)
         cursoRepository.delete(buscarCurso(id));

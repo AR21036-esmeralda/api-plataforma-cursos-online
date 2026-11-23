@@ -1,10 +1,11 @@
 {
   "info": {
     "_postman_id": "eb1d1bfc-2ff0-476e-a977-b67ab62af712",
-    "name": "API Plataforma Cursos Online Copy",
+    "name": "API Plataforma Cursos Online",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "45695376",
-    "_collection_link": "https://go.postman.co/collection/45695376-eb1d1bfc-2ff0-476e-a977-b67ab62af712?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/45695376-eb1d1bfc-2ff0-476e-a977-b67ab62af712?source=collection_link",
+    "description": "Pruebas de los CRUD de Curso, Lección y Usuario de la API de la Plataforma de Cursos Online. Ejecutar en orden con el Collection Runner. Usa la BD cargada con datos_de_pruebas.sql (cursos 1 y 2, lecciones con orden 1 y 2, profesores 2 y 3). baseUrl = http://localhost:8081. Incluye casos de error con status 400/404/409."
   },
   "item": [
     {
@@ -29,18 +30,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/cursos",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "cursos"
-              ]
-            }
+            "url": "{{baseUrl}}/api/cursos"
           },
           "response": []
         },
@@ -71,19 +61,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/cursos/1",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "cursos",
-                "1"
-              ]
-            }
+            "url": "{{baseUrl}}/api/cursos/1"
           },
           "response": []
         },
@@ -119,18 +97,7 @@
                 }
               }
             },
-            "url": {
-              "raw": "http://localhost:8081/api/cursos",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "cursos"
-              ]
-            },
+            "url": "{{baseUrl}}/api/cursos",
             "description": "Ejecutar primero para crear SOLO un curso de prueba. Guarda su ID en cursoPruebaId. No repetir POST por accidente."
           },
           "response": []
@@ -173,19 +140,7 @@
                 }
               }
             },
-            "url": {
-              "raw": "http://localhost:8081/api/cursos/{{cursoPruebaId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "cursos",
-                "{{cursoPruebaId}}"
-              ]
-            },
+            "url": "{{baseUrl}}/api/cursos/{{cursoPruebaId}}",
             "description": "Solo actualizar el curso creado en esta misma colección. Requiere cursoPruebaId."
           },
           "response": []
@@ -219,19 +174,7 @@
           "request": {
             "method": "DELETE",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/cursos/{{cursoPruebaId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "cursos",
-                "{{cursoPruebaId}}"
-              ]
-            },
+            "url": "{{baseUrl}}/api/cursos/{{cursoPruebaId}}",
             "description": "ATENCIÓN: modifica la base de datos. Ejecutar solo una vez después de crear el curso de prueba."
           },
           "response": []
@@ -257,19 +200,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/cursos/{{cursoPruebaId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "cursos",
-                "{{cursoPruebaId}}"
-              ]
-            }
+            "url": "{{baseUrl}}/api/cursos/{{cursoPruebaId}}"
           },
           "response": []
         },
@@ -291,19 +222,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/cursos/9999",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "cursos",
-                "9999"
-              ]
-            }
+            "url": "{{baseUrl}}/api/cursos/9999"
           },
           "response": []
         },
@@ -332,18 +251,7 @@
                 }
               }
             },
-            "url": {
-              "raw": "http://localhost:8081/api/cursos",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "cursos"
-              ]
-            }
+            "url": "{{baseUrl}}/api/cursos"
           },
           "response": []
         },
@@ -372,18 +280,7 @@
                 }
               }
             },
-            "url": {
-              "raw": "http://localhost:8081/api/cursos",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "cursos"
-              ]
-            }
+            "url": "{{baseUrl}}/api/cursos"
           },
           "response": []
         },
@@ -403,19 +300,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/cursos/abc",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "cursos",
-                "abc"
-              ]
-            }
+            "url": "{{baseUrl}}/api/cursos/abc"
           },
           "response": []
         }
@@ -440,18 +325,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/lecciones",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "lecciones"
-              ]
-            }
+            "url": "{{baseUrl}}/api/lecciones"
           },
           "response": []
         },
@@ -469,7 +343,7 @@
                   "if (pm.response.code === 201) {",
                   "    const respuesta = pm.response.json();",
                   "    pm.expect(respuesta).to.have.property(\"idLeccion\");",
-                  "    pm.collectionVariables.set(\"leccionPruebaId\", String(respuesta.idLeccion));",
+                  "    pm.collectionVariables.set(\"leccionPruebaId\", String(respuesta.idLeccion));\n    pm.collectionVariables.set(\"ordenLeccion\", String(respuesta.orden));",
                   "}"
                 ]
               }
@@ -480,25 +354,14 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"titulo\": \"Lección de prueba Entrega 3\",\n  \"contenido\": \"Prueba de creación de lecciones con Postman.\",\n  \"orden\": 4,\n  \"idCurso\": 1\n}",
+              "raw": "{\n  \"titulo\": \"Lección de prueba Entrega 3\",\n  \"contenido\": \"Prueba de creación de lecciones con Postman.\",\n  \"orden\": 99,\n  \"idCurso\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "url": {
-              "raw": "http://localhost:8081/api/lecciones",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "lecciones"
-              ]
-            },
+            "url": "{{baseUrl}}/api/lecciones",
             "description": "Crea una lección de prueba vinculada al curso 1 con orden 4. Si ese orden ya existe, elegir uno libre ANTES de enviar. Guarda leccionPruebaId."
           },
           "response": []
@@ -521,19 +384,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/lecciones/5",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "lecciones",
-                "5"
-              ]
-            }
+            "url": "{{baseUrl}}/api/lecciones/{{leccionPruebaId}}"
           },
           "response": []
         },
@@ -568,26 +419,14 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"titulo\": \"Lección de prueba Entrega 3 actualizada\",\r\n  \"contenido\": \"Verificación de la actualización mediante PUT en Postman.\",\r\n  \"orden\": 4,\r\n  \"idCurso\": 1\r\n}",
+              "raw": "{\n  \"titulo\": \"Lección de prueba Entrega 3 actualizada\",\n  \"contenido\": \"Verificación de la actualización mediante PUT en Postman.\",\n  \"orden\": 99,\n  \"idCurso\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "url": {
-              "raw": "http://localhost:8081/api/lecciones/{{leccionPruebaId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "lecciones",
-                "{{leccionPruebaId}}"
-              ]
-            }
+            "url": "{{baseUrl}}/api/lecciones/{{leccionPruebaId}}"
           },
           "response": []
         },
@@ -620,19 +459,7 @@
           "request": {
             "method": "DELETE",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/lecciones/{{leccionPruebaId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "lecciones",
-                "{{leccionPruebaId}}"
-              ]
-            },
+            "url": "{{baseUrl}}/api/lecciones/{{leccionPruebaId}}",
             "description": "ATENCIÓN: modifica la base de datos. Ejecutar solo para la lección de prueba creada en esta colección."
           },
           "response": []
@@ -653,19 +480,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/lecciones/{{leccionPruebaId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "lecciones",
-                "{{leccionPruebaId}}"
-              ]
-            }
+            "url": "{{baseUrl}}/api/lecciones/{{leccionPruebaId}}"
           },
           "response": []
         },
@@ -685,19 +500,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/lecciones/9999",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "lecciones",
-                "9999"
-              ]
-            }
+            "url": "{{baseUrl}}/api/lecciones/9999"
           },
           "response": []
         },
@@ -726,23 +529,12 @@
                 }
               }
             },
-            "url": {
-              "raw": "http://localhost:8081/api/lecciones",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "lecciones"
-              ]
-            }
+            "url": "{{baseUrl}}/api/lecciones"
           },
           "response": []
         },
         {
-          "name": "Error orden duplicado",
+          "name": "Error orden duplicado (orden 1 del curso 1)",
           "event": [
             {
               "listen": "test",
@@ -759,25 +551,14 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"titulo\": \"Prueba de orden duplicado\",\r\n  \"contenido\": \"Validación de regla de negocio.\",\r\n  \"orden\": 3,\r\n  \"idCurso\": 1\r\n}",
+              "raw": "{\n  \"titulo\": \"Prueba de orden duplicado\",\n  \"contenido\": \"Validación de regla de negocio.\",\n  \"orden\": 1,\n  \"idCurso\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "url": {
-              "raw": "http://localhost:8081/api/lecciones",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "lecciones"
-              ]
-            }
+            "url": "{{baseUrl}}/api/lecciones"
           },
           "response": []
         }
@@ -820,18 +601,7 @@
                 }
               }
             },
-            "url": {
-              "raw": "http://localhost:8081/api/usuarios",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "usuarios"
-              ]
-            },
+            "url": "{{baseUrl}}/api/usuarios",
             "description": "Crear un usuario de prueba con email único. En el controlador original POST devuelve 200 (no 201). Captura usuarioPruebaId y emailUsuarioPrueba."
           },
           "response": []
@@ -852,18 +622,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/usuarios",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "usuarios"
-              ]
-            }
+            "url": "{{baseUrl}}/api/usuarios"
           },
           "response": []
         },
@@ -905,19 +664,7 @@
                 }
               }
             },
-            "url": {
-              "raw": "http://localhost:8081/api/usuarios/{{usuarioPruebaId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "usuarios",
-                "{{usuarioPruebaId}}"
-              ]
-            }
+            "url": "{{baseUrl}}/api/usuarios/{{usuarioPruebaId}}"
           },
           "response": []
         },
@@ -946,19 +693,7 @@
           "request": {
             "method": "DELETE",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/usuarios/{{usuarioPruebaId}}",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "usuarios",
-                "{{usuarioPruebaId}}"
-              ]
-            },
+            "url": "{{baseUrl}}/api/usuarios/{{usuarioPruebaId}}",
             "description": "ATENCIÓN: modifica la base de datos. El controlador original devuelve 200. Solo eliminar usuarioPruebaId recién creado por la colección."
           },
           "response": []
@@ -989,18 +724,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "http://localhost:8081/api/usuarios",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "usuarios"
-              ]
-            }
+            "url": "{{baseUrl}}/api/usuarios"
           },
           "response": []
         },
@@ -1029,18 +753,7 @@
                 }
               }
             },
-            "url": {
-              "raw": "http://localhost:8081/api/usuarios",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "usuarios"
-              ]
-            }
+            "url": "{{baseUrl}}/api/usuarios"
           },
           "response": []
         },
@@ -1074,18 +787,7 @@
                 }
               }
             },
-            "url": {
-              "raw": "http://localhost:8081/api/usuarios",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "8081",
-              "path": [
-                "api",
-                "usuarios"
-              ]
-            }
+            "url": "{{baseUrl}}/api/usuarios"
           },
           "response": []
         }
@@ -1093,6 +795,10 @@
     }
   ],
   "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    },
     {
       "key": "cursoPruebaId",
       "value": ""

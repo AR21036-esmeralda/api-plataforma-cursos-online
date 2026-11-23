@@ -2,12 +2,14 @@ package com.ues.api_cursos_online.service;
 
 import com.ues.api_cursos_online.dto.PreguntaRequestDTO;
 import com.ues.api_cursos_online.dto.PreguntaResponseDTO;
+import com.ues.api_cursos_online.entity.Curso;
 import com.ues.api_cursos_online.entity.Leccion;
 import com.ues.api_cursos_online.entity.Pregunta;
 import com.ues.api_cursos_online.entity.Rol;
 import com.ues.api_cursos_online.entity.Usuario;
 import com.ues.api_cursos_online.exception.BusinessRuleException;
 import com.ues.api_cursos_online.exception.ResourceNotFoundException;
+import com.ues.api_cursos_online.repository.InscripcionRepository;
 import com.ues.api_cursos_online.repository.LeccionRepository;
 import com.ues.api_cursos_online.repository.PreguntaRepository;
 import com.ues.api_cursos_online.repository.UsuarioRepository;
@@ -38,10 +40,14 @@ class PreguntaServiceTest {
     @Mock
     private LeccionRepository leccionRepository;
 
+    @Mock
+    private InscripcionRepository inscripcionRepository;
+
     @InjectMocks
     private PreguntaService preguntaService;
 
     private Usuario estudiante;
+    private Curso curso;
     private Leccion leccion;
     private Pregunta pregunta;
     private PreguntaRequestDTO request;
@@ -58,7 +64,9 @@ class PreguntaServiceTest {
         estudiante.setEstado(true);
         estudiante.setRol(rolEstudiante);
 
-        leccion = Leccion.builder().idLeccion(1L).titulo("Introducción a HTML y CSS").build();
+        curso = Curso.builder().idCurso(1L).nombreCurso("Desarrollo Web").build();
+        leccion = Leccion.builder().idLeccion(1L).titulo("Introducción a HTML y CSS")
+                .curso(curso).build();
 
         pregunta = Pregunta.builder()
                 .idPregunta(30L).usuario(estudiante).leccion(leccion)
@@ -68,10 +76,17 @@ class PreguntaServiceTest {
                 .idUsuario(4L).idLeccion(1L).contenido("¿Qué es un elemento block?").build();
     }
 
+    private void inscripcionActiva() {
+        when(inscripcionRepository
+                .existsByUsuario_IdUsuarioAndCurso_IdCursoAndEstadoTrue(4L, 1L))
+                .thenReturn(true);
+    }
+
     @Test
-    void crear_conDatosValidos_guardaConFecha() {
+    void crear_conDatosValidos_guardaConFechaYCurso() {
         when(leccionRepository.findById(1L)).thenReturn(Optional.of(leccion));
         when(usuarioRepository.findById(4L)).thenReturn(Optional.of(estudiante));
+        inscripcionActiva();
         when(preguntaRepository.save(any(Pregunta.class))).thenAnswer(inv -> inv.getArgument(0));
 
         PreguntaResponseDTO respuesta = preguntaService.crear(request);
@@ -79,7 +94,11 @@ class PreguntaServiceTest {
         assertEquals("¿Qué es un elemento block?", respuesta.getContenido());
         assertEquals("Lucía Fernández", respuesta.getNombreEstudiante());
         assertEquals("Introducción a HTML y CSS", respuesta.getTituloLeccion());
+        assertEquals(1L, respuesta.getIdCurso());
+        assertEquals("Desarrollo Web", respuesta.getNombreCurso());
         assertNotNull(respuesta.getFecha());
+        verify(inscripcionRepository)
+                .existsByUsuario_IdUsuarioAndCurso_IdCursoAndEstadoTrue(4L, 1L);
     }
 
     @Test
@@ -120,6 +139,24 @@ class PreguntaServiceTest {
     }
 
     @Test
+    void crear_sinInscripcionActiva_lanzaReglaDeNegocio() {
+        when(leccionRepository.findById(1L)).thenReturn(Optional.of(leccion));
+        when(usuarioRepository.findById(4L)).thenReturn(Optional.of(estudiante));
+        when(inscripcionRepository
+                .existsByUsuario_IdUsuarioAndCurso_IdCursoAndEstadoTrue(4L, 1L))
+                .thenReturn(false);
+
+        BusinessRuleException excepcion = assertThrows(
+                BusinessRuleException.class,
+                () -> preguntaService.crear(request)
+        );
+
+        assertEquals("El estudiante no está inscrito en el curso de la lección",
+                excepcion.getMessage());
+        verify(preguntaRepository, never()).save(any());
+    }
+
+    @Test
     void obtenerPorId_inexistente_lanzaNotFound() {
         when(preguntaRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -133,6 +170,8 @@ class PreguntaServiceTest {
         List<PreguntaResponseDTO> lista = preguntaService.listar(null, null);
 
         assertEquals(1, lista.size());
+        assertEquals(1L, lista.get(0).getIdCurso());
+        assertEquals("Desarrollo Web", lista.get(0).getNombreCurso());
         verify(leccionRepository, never()).findById(any());
         verify(usuarioRepository, never()).findById(any());
     }
@@ -150,12 +189,28 @@ class PreguntaServiceTest {
         when(preguntaRepository.findById(30L)).thenReturn(Optional.of(pregunta));
         when(leccionRepository.findById(1L)).thenReturn(Optional.of(leccion));
         when(usuarioRepository.findById(4L)).thenReturn(Optional.of(estudiante));
+        inscripcionActiva();
         when(preguntaRepository.save(any(Pregunta.class))).thenAnswer(inv -> inv.getArgument(0));
         request.setContenido("Pregunta editada");
 
         PreguntaResponseDTO respuesta = preguntaService.actualizar(30L, request);
 
         assertEquals("Pregunta editada", respuesta.getContenido());
+        assertEquals("Desarrollo Web", respuesta.getNombreCurso());
+    }
+
+    @Test
+    void actualizar_sinInscripcionActiva_lanzaReglaDeNegocio() {
+        when(preguntaRepository.findById(30L)).thenReturn(Optional.of(pregunta));
+        when(leccionRepository.findById(1L)).thenReturn(Optional.of(leccion));
+        when(usuarioRepository.findById(4L)).thenReturn(Optional.of(estudiante));
+        when(inscripcionRepository
+                .existsByUsuario_IdUsuarioAndCurso_IdCursoAndEstadoTrue(4L, 1L))
+                .thenReturn(false);
+
+        assertThrows(BusinessRuleException.class,
+                () -> preguntaService.actualizar(30L, request));
+        verify(preguntaRepository, never()).save(any());
     }
 
     @Test

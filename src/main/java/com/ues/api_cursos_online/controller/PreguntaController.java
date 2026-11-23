@@ -5,6 +5,8 @@ import com.ues.api_cursos_online.dto.PreguntaResponseDTO;
 import com.ues.api_cursos_online.dto.RespuestaResponseDTO;
 import com.ues.api_cursos_online.service.PreguntaService;
 import com.ues.api_cursos_online.service.RespuestaService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import java.util.List;
 
 /** Endpoints REST del recurso Pregunta: /api/preguntas */
 @RestController
+@Tag(name = "Preguntas", description = "CU14, CU15 - Preguntas de los estudiantes")
 @RequestMapping("/api/preguntas")
 @RequiredArgsConstructor
 @Validated
@@ -47,6 +50,7 @@ public class PreguntaController {
     }
 
     /** POST /api/preguntas */
+    @Operation(summary = "Realizar una pregunta sobre una lección (CU14)")
     @PostMapping
     public ResponseEntity<PreguntaResponseDTO> crear(@Valid @RequestBody PreguntaRequestDTO dto) {
         PreguntaResponseDTO creada = preguntaService.crear(dto);

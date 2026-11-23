@@ -7,6 +7,7 @@ import com.ues.api_cursos_online.entity.Pregunta;
 import com.ues.api_cursos_online.entity.Usuario;
 import com.ues.api_cursos_online.exception.BusinessRuleException;
 import com.ues.api_cursos_online.exception.ResourceNotFoundException;
+import com.ues.api_cursos_online.repository.InscripcionRepository;
 import com.ues.api_cursos_online.repository.LeccionRepository;
 import com.ues.api_cursos_online.repository.PreguntaRepository;
 import com.ues.api_cursos_online.repository.UsuarioRepository;
@@ -27,6 +28,7 @@ public class PreguntaService {
     private final PreguntaRepository preguntaRepository;
     private final UsuarioRepository usuarioRepository;
     private final LeccionRepository leccionRepository;
+    private final InscripcionRepository inscripcionRepository;
 
     /** Lista las preguntas; los filtros por lección y por estudiante son opcionales. */
     @Transactional(readOnly = true)
@@ -51,6 +53,7 @@ public class PreguntaService {
     public PreguntaResponseDTO crear(PreguntaRequestDTO dto) {
         Leccion leccion = buscarLeccion(dto.getIdLeccion());
         Usuario estudiante = obtenerEstudianteActivo(dto.getIdUsuario());
+        validarInscripcion(estudiante.getIdUsuario(), leccion);
 
         Pregunta pregunta = Pregunta.builder()
                 .usuario(estudiante)
@@ -66,6 +69,7 @@ public class PreguntaService {
         Pregunta pregunta = buscarPregunta(id);
         Leccion leccion = buscarLeccion(dto.getIdLeccion());
         Usuario estudiante = obtenerEstudianteActivo(dto.getIdUsuario());
+        validarInscripcion(estudiante.getIdUsuario(), leccion);
 
         pregunta.setUsuario(estudiante);
         pregunta.setLeccion(leccion);
@@ -108,6 +112,17 @@ public class PreguntaService {
         return usuario;
     }
 
+    /** CU14: el estudiante debe estar inscrito en el curso al que pertenece la lección. */
+    private void validarInscripcion(Long idUsuario, Leccion leccion) {
+        Long idCurso = leccion.getCurso().getIdCurso();
+        boolean inscrito = inscripcionRepository
+                .existsByUsuario_IdUsuarioAndCurso_IdCursoAndEstadoTrue(idUsuario, idCurso);
+        if (!inscrito) {
+            throw new BusinessRuleException(
+                    "El estudiante no está inscrito en el curso de la lección");
+        }
+    }
+
     private PreguntaResponseDTO toResponse(Pregunta pregunta) {
         Usuario estudiante = pregunta.getUsuario();
         return PreguntaResponseDTO.builder()
@@ -116,6 +131,8 @@ public class PreguntaService {
                 .nombreEstudiante(estudiante.getNombreUsuario() + " " + estudiante.getApellidoUsuario())
                 .idLeccion(pregunta.getLeccion().getIdLeccion())
                 .tituloLeccion(pregunta.getLeccion().getTitulo())
+                .idCurso(pregunta.getLeccion().getCurso().getIdCurso())
+                .nombreCurso(pregunta.getLeccion().getCurso().getNombreCurso())
                 .contenido(pregunta.getContenido())
                 .fecha(pregunta.getFecha())
                 .build();

@@ -1,0 +1,871 @@
+{
+  "info": {
+    "name": "Entrega 3 - Relaciones (Inscripciones, Progresos, Categorias, Roles e Intentos)",
+    "description": "Demo ejecutable de las relaciones de la Entrega #3. Ejecutar las carpetas en orden con el Collection Runner: autenticación → preparación → inscripciones → progresos → evaluación e intento → baja y limpieza. Todas las peticiones usan {{baseUrl}} (http://localhost:8081) y tienen assertions pm.test. Los POST encadenan sus IDs con variables de colección.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0 - Autenticación y catálogos",
+      "description": "Login y catálogo de roles.",
+      "item": [
+        {
+          "name": "POST /api/auth/login (CU02)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"El login devuelve token y datos del administrador\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property(\"token\");",
+                  "    pm.expect(j.email).to.eql(\"admin@plataforma.com\");",
+                  "    pm.expect(j.rol).to.eql(\"ADMINISTRADOR\");",
+                  "    pm.collectionVariables.set(\"token\", j.token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{emailAdmin}}\",\n  \"password\": \"{{passwordAdmin}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Credenciales de prueba: admin@plataforma.com / admin123. Guarda el token en la variable token."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/roles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });",
+                  "pm.test(\"Existe el rol ESTUDIANTE\", function () {",
+                  "    const est = pm.response.json().find(r => r.nombreRol === \"ESTUDIANTE\");",
+                  "    pm.expect(est, \"El catálogo debe incluir ESTUDIANTE\").to.exist;",
+                  "    pm.collectionVariables.set(\"idRolEstudiante\", String(est.idRol));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/roles",
+            "description": "Catálogo de roles. Guarda el id del rol ESTUDIANTE para crear el usuario de la demo."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/roles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 o 409 (rol ya registrado)\", function () {",
+                  "    pm.expect([201, 409]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test(\"Respuesta coherente con el resultado\", function () {",
+                  "    const j = pm.response.json();",
+                  "    if (pm.response.code === 201) {",
+                  "        pm.expect(j).to.have.property(\"idRol\");",
+                  "        pm.collectionVariables.set(\"idRol\", String(j.idRol));",
+                  "    } else {",
+                  "        pm.expect(j).to.have.property(\"mensaje\");",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/roles",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreRol\": \"ESTUDIANTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "La API sólo permite ADMINISTRADOR/ESTUDIANTE/PROFESOR y ya existen en la BD de prueba: la respuesta válida es 201 (si no existe) o 409 (duplicado)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "1 - Preparación",
+      "description": "Crear usuario → categoría → curso → lección.",
+      "item": [
+        {
+          "name": "POST /api/usuarios (crear estudiante)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"emailDemo\", \"estudiante.demo.\" + Date.now() + \"@example.com\");"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"La respuesta trae idUsuario\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property(\"idUsuario\");",
+                  "    pm.collectionVariables.set(\"idUsuario\", String(j.idUsuario));",
+                  "});",
+                  "pm.test(\"El usuario creado tiene rol ESTUDIANTE\", function () {",
+                  "    pm.expect(pm.response.json().rol).to.eql(\"ESTUDIANTE\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/usuarios",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreUsuario\": \"Estudiante\",\n  \"apellidoUsuario\": \"Demo Entrega 3\",\n  \"email\": \"{{emailDemo}}\",\n  \"password\": \"ClavePrueba123!\",\n  \"estado\": true,\n  \"idRol\": {{idRolEstudiante}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crea un estudiante nuevo para no chocar con las inscripciones de la BD de prueba."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/categorias",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categorias"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/categorias",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"nombreCategoriaDemo\", \"Categoria Demo \" + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"La respuesta trae idCategoria\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property(\"idCategoria\");",
+                  "    pm.collectionVariables.set(\"idCategoria\", String(j.idCategoria));",
+                  "});",
+                  "pm.test(\"La categoría se creó activa\", function () {",
+                  "    pm.expect(pm.response.json().estado).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categorias",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCategoria\": \"{{nombreCategoriaDemo}}\",\n  \"descripcion\": \"Categoría creada para la demo de relaciones de la Entrega 3\",\n  \"estado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/categorias/{{idCategoria}}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"La categoría consultada es la creada\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j.idCategoria).to.eql(Number(pm.collectionVariables.get(\"idCategoria\")));",
+                  "    pm.expect(j.nombreCategoria).to.eql(pm.collectionVariables.get(\"nombreCategoriaDemo\"));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categorias/{{idCategoria}}"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/cursos",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"nombreCursoDemo\", \"Curso Demo Entrega 3 \" + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"La respuesta trae idCurso\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property(\"idCurso\");",
+                  "    pm.collectionVariables.set(\"idCurso\", String(j.idCurso));",
+                  "});",
+                  "pm.test(\"El curso quedó ligado a la categoría creada\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j.idCategoria).to.eql(Number(pm.collectionVariables.get(\"idCategoria\")));",
+                  "    pm.expect(j.nombreCategoria).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/cursos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCurso\": \"{{nombreCursoDemo}}\",\n  \"descripcion\": \"Curso creado para demostrar las relaciones de la Entrega 3\",\n  \"estado\": true,\n  \"idCategoria\": {{idCategoria}},\n  \"idProfesor\": {{idProfesor}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "El profesor 2 (Ana Martínez) existe en los datos de prueba."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/lecciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"La respuesta trae idLeccion\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property(\"idLeccion\");",
+                  "    pm.collectionVariables.set(\"idLeccion\", String(j.idLeccion));",
+                  "});",
+                  "pm.test(\"La lección pertenece al curso creado\", function () {",
+                  "    pm.expect(pm.response.json().idCurso).to.eql(Number(pm.collectionVariables.get(\"idCurso\")));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/lecciones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Lección de la demo de relaciones\",\n  \"contenido\": \"Contenido usado para probar el progreso (CU08).\",\n  \"orden\": 1,\n  \"idCurso\": {{idCurso}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "El curso recién creado no tiene lecciones, así que el orden 1 está libre."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2 - Inscripciones",
+      "description": "CU05, CU06 y CU19: dar de alta y consultar inscripciones.",
+      "item": [
+        {
+          "name": "POST /api/inscripciones (CU05)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"La respuesta trae idInscripcion\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property(\"idInscripcion\");",
+                  "    pm.collectionVariables.set(\"idInscripcion\", String(j.idInscripcion));",
+                  "});",
+                  "pm.test(\"La inscripción queda activa\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j.estado).to.eql(true);",
+                  "    pm.expect(j.idUsuario).to.eql(Number(pm.collectionVariables.get(\"idUsuario\")));",
+                  "    pm.expect(j.idCurso).to.eql(Number(pm.collectionVariables.get(\"idCurso\")));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/inscripciones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": {{idUsuario}},\n  \"idCurso\": {{idCurso}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Inscribe al estudiante creado en el curso creado (201)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/inscripciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/inscripciones"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/inscripciones/estudiante/{{idUsuario}}/cursos (CU06)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });",
+                  "pm.test(\"Sólo aparecen inscripciones del estudiante\", function () {",
+                  "    const id = Number(pm.collectionVariables.get(\"idUsuario\"));",
+                  "    pm.response.json().forEach(i => pm.expect(i.idUsuario).to.eql(id));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/inscripciones/estudiante/{{idUsuario}}/cursos"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/inscripciones/curso/{{idCurso}}/estudiantes (CU19)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });",
+                  "pm.test(\"Sólo aparecen inscripciones del curso\", function () {",
+                  "    const id = Number(pm.collectionVariables.get(\"idCurso\"));",
+                  "    pm.response.json().forEach(i => pm.expect(i.idCurso).to.eql(id));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/inscripciones/curso/{{idCurso}}/estudiantes"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3 - Progresos",
+      "description": "CU08 y CU09: requiere inscripción activa.",
+      "item": [
+        {
+          "name": "POST /api/progresos (CU08)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"La respuesta trae idProgreso\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property(\"idProgreso\");",
+                  "    pm.collectionVariables.set(\"idProgreso\", String(j.idProgreso));",
+                  "});",
+                  "pm.test(\"El progreso queda completado\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j.estado).to.eql(true);",
+                  "    pm.expect(j.idLeccion).to.eql(Number(pm.collectionVariables.get(\"idLeccion\")));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/progresos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": {{idUsuario}},\n  \"idLeccion\": {{idLeccion}},\n  \"estado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Requiere una inscripción activa: por eso se ejecuta antes de dar de baja (CU13)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/progresos/estudiante/{{idUsuario}} (CU09)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });",
+                  "pm.test(\"Sólo aparece el progreso del estudiante\", function () {",
+                  "    const id = Number(pm.collectionVariables.get(\"idUsuario\"));",
+                  "    pm.response.json().forEach(p => pm.expect(p.idUsuario).to.eql(id));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/progresos/estudiante/{{idUsuario}}"
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/progresos/estudiante/{{idUsuario}}/curso/{{idCurso}}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });",
+                  "pm.test(\"El progreso pertenece al curso indicado\", function () {",
+                  "    const idCurso = Number(pm.collectionVariables.get(\"idCurso\"));",
+                  "    pm.response.json().forEach(p => pm.expect(p.idCurso).to.eql(idCurso));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/progresos/estudiante/{{idUsuario}}/curso/{{idCurso}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4 - Evaluación e intento",
+      "description": "CU10: crear evaluación, registrarla y consultarla.",
+      "item": [
+        {
+          "name": "POST /api/evaluaciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"La respuesta trae idEvaluacion\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property(\"idEvaluacion\");",
+                  "    pm.collectionVariables.set(\"idEvaluacion\", String(j.idEvaluacion));",
+                  "});",
+                  "pm.test(\"La evaluación pertenece al curso creado\", function () {",
+                  "    pm.expect(pm.response.json().idCurso).to.eql(Number(pm.collectionVariables.get(\"idCurso\")));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/evaluaciones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Evaluación Demo Entrega 3\",\n  \"descripcion\": \"Evaluación creada para probar el CU10\",\n  \"fechaLimite\": \"2027-12-31T23:59:59\",\n  \"idCurso\": {{idCurso}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/intentos-evaluacion/evaluacion/{{idEvaluacion}} (CU10)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201\", function () { pm.response.to.have.status(201); });",
+                  "pm.test(\"La respuesta trae idIntento\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property(\"idIntento\");",
+                  "    pm.collectionVariables.set(\"idIntento\", String(j.idIntento));",
+                  "});",
+                  "pm.test(\"El intento queda registrado\", function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j.mensaje).to.be.a(\"string\");",
+                  "    pm.expect(j.idUsuario).to.eql(Number(pm.collectionVariables.get(\"idUsuario\")));",
+                  "    pm.expect(j.tituloEvaluacion).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/intentos-evaluacion/evaluacion/{{idEvaluacion}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idUsuario\": {{idUsuario}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Equivale a {\"idUsuario\":4} con los datos semilla; con el runner usa el estudiante creado arriba."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/intentos-evaluacion/estudiante/{{idUsuario}}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an(\"array\"); });",
+                  "pm.test(\"Sólo aparecen los intentos del estudiante\", function () {",
+                  "    const id = Number(pm.collectionVariables.get(\"idUsuario\"));",
+                  "    pm.response.json().forEach(i => pm.expect(i.idUsuario).to.eql(id));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/intentos-evaluacion/estudiante/{{idUsuario}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5 - Baja (CU13) y limpieza",
+      "description": "Ejecutar al final, después de progresos e intentos.",
+      "item": [
+        {
+          "name": "DELETE /api/progresos/{{idProgreso}}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/progresos/{{idProgreso}}",
+            "description": "Limpieza del progreso creado."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/inscripciones/{{idInscripcion}}/baja (CU13)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200\", function () { pm.response.to.have.status(200); });",
+                  "pm.test(\"La inscripción quedó dada de baja\", function () {",
+                  "    pm.expect(pm.response.json().estado).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/inscripciones/{{idInscripcion}}/baja",
+            "description": "Baja lógica de la inscripción: debe dejar estado=false."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/inscripciones/{{idInscripcion}}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/inscripciones/{{idInscripcion}}",
+            "description": "Eliminación física de la inscripción de prueba."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "emailAdmin",
+      "value": "admin@plataforma.com"
+    },
+    {
+      "key": "passwordAdmin",
+      "value": "admin123"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "idProfesor",
+      "value": "2"
+    },
+    {
+      "key": "idRolEstudiante",
+      "value": "3"
+    },
+    {
+      "key": "idRol",
+      "value": ""
+    },
+    {
+      "key": "idUsuario",
+      "value": "4"
+    },
+    {
+      "key": "idCategoria",
+      "value": "1"
+    },
+    {
+      "key": "idCurso",
+      "value": "1"
+    },
+    {
+      "key": "idLeccion",
+      "value": "1"
+    },
+    {
+      "key": "idInscripcion",
+      "value": ""
+    },
+    {
+      "key": "idProgreso",
+      "value": ""
+    },
+    {
+      "key": "idEvaluacion",
+      "value": "1"
+    },
+    {
+      "key": "idIntento",
+      "value": ""
+    },
+    {
+      "key": "emailDemo",
+      "value": ""
+    },
+    {
+      "key": "nombreCategoriaDemo",
+      "value": ""
+    },
+    {
+      "key": "nombreCursoDemo",
+      "value": ""
+    }
+  ]
+}

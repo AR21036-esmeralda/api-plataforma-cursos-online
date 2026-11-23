@@ -7,7 +7,9 @@ import java.time.LocalDateTime;
 
 /** Respuesta que un profesor da a una pregunta. Tabla RESPUESTA. */
 @Entity
-@Table(name = "respuesta")
+@Table(name = "respuesta", uniqueConstraints = {
+        @UniqueConstraint(name = "uq_respuesta_pregunta", columnNames = "idpregunta")
+})
 @Getter
 @Setter
 @NoArgsConstructor

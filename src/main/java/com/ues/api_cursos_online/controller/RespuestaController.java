@@ -3,6 +3,8 @@ package com.ues.api_cursos_online.controller;
 import com.ues.api_cursos_online.dto.RespuestaRequestDTO;
 import com.ues.api_cursos_online.dto.RespuestaResponseDTO;
 import com.ues.api_cursos_online.service.RespuestaService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import java.util.List;
 
 /** Endpoints REST del recurso Respuesta: /api/respuestas */
 @RestController
+@Tag(name = "Respuestas", description = "CU20 - Respuestas de los profesores")
 @RequestMapping("/api/respuestas")
 @RequiredArgsConstructor
 @Validated
@@ -38,6 +41,7 @@ public class RespuestaController {
     }
 
     /** POST /api/respuestas */
+    @Operation(summary = "Responder una pregunta (CU20)")
     @PostMapping
     public ResponseEntity<RespuestaResponseDTO> crear(@Valid @RequestBody RespuestaRequestDTO dto) {
         RespuestaResponseDTO creada = respuestaService.crear(dto);

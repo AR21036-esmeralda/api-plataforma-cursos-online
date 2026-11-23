@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-cursos-online
+  labels:
+    app: api-cursos-online
 spec:
   replicas: 1
   selector:
@@ -14,17 +16,57 @@ spec:
     spec:
       containers:
         - name: api-cursos-online
-          image: api-cursos-online:latest
+          image: api-cursos:latest
+          # La imagen se carga en el nodo con `kind load docker-image` (o Docker Desktop).
           imagePullPolicy: Never
           ports:
-            - containerPort: 8081
+            - name: http
+              containerPort: 8081
           env:
+            # La aplicación lee DB_* (src/main/resources/application.properties).
+            # Se incluyen además las variables canónicas de Spring Boot por si se
+            # cambia la configuración; apuntan a los mismos valores.
             - name: DB_URL
               value: "jdbc:postgresql://postgres-service:5432/plataforma_cursos_online"
             - name: DB_USER
               value: "postgres"
             - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: POSTGRES_PASSWORD
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres-service:5432/plataforma_cursos_online"
+            - name: SPRING_DATASOURCE_USERNAME
               value: "postgres"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: POSTGRES_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
 ---
 apiVersion: v1
 kind: Service
@@ -35,6 +77,7 @@ spec:
   selector:
     app: api-cursos-online
   ports:
-    - port: 8081
+    - name: http
+      port: 8081
       targetPort: 8081
       nodePort: 30081

@@ -3,6 +3,8 @@ package com.ues.api_cursos_online.controller;
 import com.ues.api_cursos_online.dto.EvaluacionRequestDTO;
 import com.ues.api_cursos_online.dto.EvaluacionResponseDTO;
 import com.ues.api_cursos_online.service.EvaluacionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import java.util.List;
 
 /** Endpoints REST del recurso Evaluación: /api/evaluaciones */
 @RestController
+@Tag(name = "Evaluaciones", description = "CU10, CU17 - Evaluaciones de los cursos")
 @RequestMapping("/api/evaluaciones")
 @RequiredArgsConstructor
 @Validated
@@ -24,6 +27,7 @@ public class EvaluacionController {
     private final EvaluacionService evaluacionService;
 
     /** GET /api/evaluaciones?idCurso=1 (filtro opcional por curso) */
+    @Operation(summary = "Listar evaluaciones; filtro opcional por curso")
     @GetMapping
     public ResponseEntity<List<EvaluacionResponseDTO>> listar(
             @RequestParam(required = false) @Positive Long idCurso) {
@@ -37,6 +41,7 @@ public class EvaluacionController {
     }
 
     /** POST /api/evaluaciones */
+    @Operation(summary = "Crear una evaluación (con fecha límite opcional)")
     @PostMapping
     public ResponseEntity<EvaluacionResponseDTO> crear(@Valid @RequestBody EvaluacionRequestDTO dto) {
         EvaluacionResponseDTO creada = evaluacionService.crear(dto);

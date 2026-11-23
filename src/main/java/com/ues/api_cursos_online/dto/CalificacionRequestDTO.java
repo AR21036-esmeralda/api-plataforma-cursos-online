@@ -27,6 +27,13 @@ public class CalificacionRequestDTO {
     @Positive(message = "El id de la evaluación debe ser positivo")
     private Long idEvaluacion;
 
+    /**
+     * Profesor que realiza la calificación (CU18). Opcional por compatibilidad
+     * con clientes antiguos; si se envía se valida su rol y que imparta el curso.
+     */
+    @Positive(message = "El id del profesor debe ser positivo")
+    private Long idProfesor;
+
     @NotNull(message = "La nota es obligatoria")
     @DecimalMin(value = "0.0", message = "La nota no puede ser menor que 0")
     @DecimalMax(value = "10.0", message = "La nota no puede ser mayor que 10")

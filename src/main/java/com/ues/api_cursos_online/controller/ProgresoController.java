@@ -3,8 +3,13 @@ package com.ues.api_cursos_online.controller;
 import com.ues.api_cursos_online.dto.ProgresoRequestDTO;
 import com.ues.api_cursos_online.dto.ProgresoResponseDTO;
 import com.ues.api_cursos_online.service.ProgresoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,100 +17,58 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/progresos")
 @RequiredArgsConstructor
+@Validated
+@Tag(name = "Progreso", description = "CU07, CU08, CU09 - Seguimiento de lecciones")
 public class ProgresoController {
 
     private final ProgresoService progresoService;
 
-    /**
-     * Lista todos los registros de progreso.
-     */
     @GetMapping
     public List<ProgresoResponseDTO> listar() {
         return progresoService.listar();
     }
 
-    /**
-     * Obtiene un registro de progreso por ID.
-     */
     @GetMapping("/{id}")
-    public ProgresoResponseDTO buscarPorId(
-            @PathVariable Long id
-    ) {
+    public ProgresoResponseDTO buscarPorId(@PathVariable @Positive Long id) {
         return progresoService.buscarPorId(id);
     }
 
-    /**
-     * Crea un nuevo registro de progreso.
-     */
     @PostMapping
-    public ProgresoResponseDTO crear(
-            @Valid @RequestBody ProgresoRequestDTO dto
-    ) {
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Registrar o marcar progreso de una lección (CU08)")
+    public ProgresoResponseDTO crear(@Valid @RequestBody ProgresoRequestDTO dto) {
         return progresoService.crear(dto);
     }
 
-    /**
-     * Actualiza un registro de progreso.
-     */
     @PutMapping("/{id}")
-    public ProgresoResponseDTO actualizar(
-            @PathVariable Long id,
-            @Valid @RequestBody ProgresoRequestDTO dto
-    ) {
+    public ProgresoResponseDTO actualizar(@PathVariable @Positive Long id,
+                                          @Valid @RequestBody ProgresoRequestDTO dto) {
         return progresoService.actualizar(id, dto);
     }
 
-    /**
-     * Elimina un registro de progreso.
-     */
     @DeleteMapping("/{id}")
-    public void eliminar(
-            @PathVariable Long id
-    ) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminar(@PathVariable @Positive Long id) {
         progresoService.eliminar(id);
     }
 
-    /**
-     * Obtiene todo el progreso de un estudiante.
-     */
     @GetMapping("/estudiante/{idUsuario}")
-    public List<ProgresoResponseDTO> listarPorEstudiante(
-            @PathVariable Long idUsuario
-    ) {
+    @Operation(summary = "Consultar el progreso de un estudiante (CU09)")
+    public List<ProgresoResponseDTO> listarPorEstudiante(@PathVariable @Positive Long idUsuario) {
         return progresoService.listarPorEstudiante(idUsuario);
     }
 
-    /**
-     * Obtiene el progreso de un estudiante
-     * dentro de un curso concreto.
-     */
-    @GetMapping(
-            "/estudiante/{idUsuario}/curso/{idCurso}"
-    )
+    @GetMapping("/estudiante/{idUsuario}/curso/{idCurso}")
     public List<ProgresoResponseDTO> listarPorEstudianteYCurso(
-            @PathVariable Long idUsuario,
-            @PathVariable Long idCurso
-    ) {
-        return progresoService.listarPorEstudianteYCurso(
-                idUsuario,
-                idCurso
-        );
+            @PathVariable @Positive Long idUsuario,
+            @PathVariable @Positive Long idCurso) {
+        return progresoService.listarPorEstudianteYCurso(idUsuario, idCurso);
     }
 
-    /**
-     * Obtiene el progreso de un estudiante
-     * en una lección concreta.
-     */
-    @GetMapping(
-            "/estudiante/{idUsuario}/leccion/{idLeccion}"
-    )
+    @GetMapping("/estudiante/{idUsuario}/leccion/{idLeccion}")
     public ProgresoResponseDTO buscarPorUsuarioYLeccion(
-            @PathVariable Long idUsuario,
-            @PathVariable Long idLeccion
-    ) {
-        return progresoService.buscarPorUsuarioYLeccion(
-                idUsuario,
-                idLeccion
-        );
+            @PathVariable @Positive Long idUsuario,
+            @PathVariable @Positive Long idLeccion) {
+        return progresoService.buscarPorUsuarioYLeccion(idUsuario, idLeccion);
     }
 }

@@ -1,41 +1,62 @@
 package com.ues.api_cursos_online.controller;
 
-import com.ues.api_cursos_online.entity.Categoria;
-import com.ues.api_cursos_online.repository.CategoriaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.ues.api_cursos_online.dto.CategoriaRequestDTO;
+import com.ues.api_cursos_online.dto.CategoriaResponseDTO;
+import com.ues.api_cursos_online.service.CategoriaService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/categorias")
+@RequiredArgsConstructor
+@Validated
+@Tag(name = "Categorías", description = "CU23 - Gestión de categorías de cursos")
 public class CategoriaController {
 
-    @Autowired
-    private CategoriaRepository categoriaRepository;
+    private final CategoriaService categoriaService;
 
     @GetMapping
-    public List<Categoria> listar() {
-        return categoriaRepository.findAll();
+    public List<CategoriaResponseDTO> listar() {
+        return categoriaService.listar();
     }
+
+    @GetMapping("/{id}")
+    public CategoriaResponseDTO obtenerPorId(@PathVariable @Positive Long id) {
+        return categoriaService.obtenerPorId(id);
+    }
+
     @PostMapping
-    public Categoria crear(@RequestBody Categoria categoria) {
-        return categoriaRepository.save(categoria);
+    @ResponseStatus(HttpStatus.CREATED)
+    public CategoriaResponseDTO crear(@Valid @RequestBody CategoriaRequestDTO dto) {
+        return categoriaService.crear(dto);
     }
+
     @PutMapping("/{id}")
-    public Categoria actualizar(@PathVariable Long id, @RequestBody Categoria categoria) {
-        Categoria existente = categoriaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
-
-        existente.setNombreCategoria(categoria.getNombreCategoria());
-        existente.setDescripcion(categoria.getDescripcion());
-        existente.setEstado(categoria.getEstado());
-
-        return categoriaRepository.save(existente);
+    public CategoriaResponseDTO actualizar(@PathVariable @Positive Long id,
+                                           @Valid @RequestBody CategoriaRequestDTO dto) {
+        return categoriaService.actualizar(id, dto);
     }
+
+    @PatchMapping("/{id}/desactivar")
+    public CategoriaResponseDTO desactivar(@PathVariable @Positive Long id) {
+        return categoriaService.desactivar(id);
+    }
+
+    @PatchMapping("/{id}/reactivar")
+    public CategoriaResponseDTO reactivar(@PathVariable @Positive Long id) {
+        return categoriaService.reactivar(id);
+    }
+
     @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable Long id) {
-        categoriaRepository.deleteById(id);
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminar(@PathVariable @Positive Long id) {
+        categoriaService.eliminar(id);
     }
 }

@@ -144,7 +144,7 @@ class InscripcionControllerTest {
     // =========================================================
 
     @Test
-    void crear_ConDatosValidos_DebeRetornar200()
+    void crear_ConDatosValidos_DebeRetornar201()
             throws Exception {
 
         InscripcionRequestDTO request =
@@ -168,7 +168,7 @@ class InscripcionControllerTest {
                                         )
                                 )
                 )
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.idInscripcion")
                         .value(1))
                 .andExpect(jsonPath("$.idUsuario")
@@ -292,7 +292,7 @@ class InscripcionControllerTest {
     // =========================================================
 
     @Test
-    void eliminar_DebeRetornar200()
+    void eliminar_DebeRetornar204()
             throws Exception {
 
         doNothing()
@@ -302,9 +302,46 @@ class InscripcionControllerTest {
         mockMvc.perform(
                         delete("/api/inscripciones/{id}", 1L)
                 )
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
         verify(inscripcionService).eliminar(1L);
+    }
+
+    // =========================================================
+    // PATCH - BAJA Y REACTIVACION
+    // =========================================================
+
+    @Test
+    void darDeBaja_DebeRetornarInscripcionInactiva()
+            throws Exception {
+
+        responseDTO.setEstado(false);
+        when(inscripcionService.darDeBaja(1L)).thenReturn(responseDTO);
+
+        mockMvc.perform(
+                        patch("/api/inscripciones/{id}/baja", 1L)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idInscripcion").value(1))
+                .andExpect(jsonPath("$.estado").value(false));
+
+        verify(inscripcionService).darDeBaja(1L);
+    }
+
+    @Test
+    void reactivar_DebeRetornarInscripcionActiva()
+            throws Exception {
+
+        when(inscripcionService.reactivar(1L)).thenReturn(responseDTO);
+
+        mockMvc.perform(
+                        patch("/api/inscripciones/{id}/reactivar", 1L)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.idInscripcion").value(1))
+                .andExpect(jsonPath("$.estado").value(true));
+
+        verify(inscripcionService).reactivar(1L);
     }
 
     // =========================================================
@@ -315,7 +352,7 @@ class InscripcionControllerTest {
     void listarCursosDeEstudiante_DebeRetornar200()
             throws Exception {
 
-        when(inscripcionService.listarPorEstudiante(1L))
+        when(inscripcionService.listarPorEstudiante(1L, false))
                 .thenReturn(List.of(responseDTO));
 
         mockMvc.perform(
@@ -333,7 +370,24 @@ class InscripcionControllerTest {
                         .value("Bases de Datos"));
 
         verify(inscripcionService)
-                .listarPorEstudiante(1L);
+                .listarPorEstudiante(1L, false);
+    }
+
+    @Test
+    void listarCursosDeEstudiante_ConIncluirInactivas_DebeRetornar200()
+            throws Exception {
+
+        when(inscripcionService.listarPorEstudiante(1L, true))
+                .thenReturn(List.of(responseDTO));
+
+        mockMvc.perform(
+                        get("/api/inscripciones/estudiante/{idUsuario}/cursos", 1L)
+                                .param("incluirInactivas", "true")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].idUsuario").value(1));
+
+        verify(inscripcionService).listarPorEstudiante(1L, true);
     }
 
     // =========================================================
@@ -344,7 +398,7 @@ class InscripcionControllerTest {
     void listarEstudiantesDeCurso_DebeRetornar200()
             throws Exception {
 
-        when(inscripcionService.listarPorCurso(1L))
+        when(inscripcionService.listarPorCurso(1L, false))
                 .thenReturn(List.of(responseDTO));
 
         mockMvc.perform(
@@ -362,6 +416,23 @@ class InscripcionControllerTest {
                         .value("Javier"));
 
         verify(inscripcionService)
-                .listarPorCurso(1L);
+                .listarPorCurso(1L, false);
+    }
+
+    @Test
+    void listarEstudiantesDeCurso_ConIncluirInactivas_DebeRetornar200()
+            throws Exception {
+
+        when(inscripcionService.listarPorCurso(1L, true))
+                .thenReturn(List.of(responseDTO));
+
+        mockMvc.perform(
+                        get("/api/inscripciones/curso/{idCurso}/estudiantes", 1L)
+                                .param("incluirInactivas", "true")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].idCurso").value(1));
+
+        verify(inscripcionService).listarPorCurso(1L, true);
     }
 }
