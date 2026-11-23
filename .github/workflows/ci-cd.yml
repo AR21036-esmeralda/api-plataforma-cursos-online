@@ -1,5 +1,20 @@
 name: CI/CD Pipeline - Plataforma Cursos Online
 
+# Los pasos de tests, jar y construcción de imagen SIEMPRE se ejecutan (push, PR y act).
+# El despliegue a Kubernetes solo corre en:
+#   - GitHub Actions real: eventos `push` a main/master.
+#   - `act`: la herramienta exporta ACT=true, por lo que también despliega.
+# En `pull_request` no se despliega.
+#
+# Requisitos del despliegue (ver README.md):
+#   - GitHub Actions (ubuntu-latest): el workflow instala kubectl/kind y crea el cluster
+#     efímero `${K8S_CLUSTER}` si no existe uno accesible.
+#   - act: se necesita un cluster kind ya creado en el HOST (o Docker Desktop Kubernetes)
+#     y Docker accesible mediante el socket montado por act.
+#   - Todas las operaciones de kubectl usan KUBECONFIG=.kube-local/config (rúbrica Entrega #3).
+# Variables recomendadas del repositorio: K8S_CLUSTER, K8S_NODE, DB_PASSWORD,
+# KUBE_INSECURE_SKIP_TLS (ver comentarios en el paso 7).
+
 on:
   push:
     branches: [ "main", "master" ]
@@ -7,69 +22,188 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
-  build-test-deploy:
+  build:
+    name: Build, tests y despliegue Kubernetes local
     runs-on: ubuntu-latest
+
+    env:
+      # La rúbrica exige el kubeconfig en .kube-local/config y la variable KUBECONFIG.
+      KUBECONFIG: .kube-local/config
+      IMAGE_TAG: api-cursos:latest
+      K8S_CLUSTER: ${{ vars.K8S_CLUSTER || 'cursos-local' }}
+      # Vacío = autodetección (<cluster>-control-plane o docker-desktop).
+      K8S_NODE: ${{ vars.K8S_NODE || '' }}
+      # Debe coincidir con k8s/secret.yaml (o sobrescribirse con un Secret creado aparte).
+      DB_PASSWORD: ${{ vars.DB_PASSWORD || 'cursos-local-2026' }}
+      # 'auto' desactiva la verificación TLS SOLO en la ruta act/kind (ver paso 7).
+      KUBE_INSECURE_SKIP_TLS: ${{ vars.KUBE_INSECURE_SKIP_TLS || 'auto' }}
 
     steps:
       - name: 1. Checkout del repositorio
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-      - name: Instalar herramientas base (curl y docker)
-        if: env.ACT == 'true'
-        run: |
-          apt-get update && apt-get install -y --no-install-recommends curl ca-certificates docker.io
       - name: 2. Configurar Java 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
       - name: 3. Ejecutar pruebas unitarias JUnit (Gradle)
-        run: |
-          chmod +x gradlew
-          ./gradlew test --no-daemon
+        run: bash gradlew clean test --no-daemon
 
-      - name: 4. Construir imagen Docker local
+      - name: 4. Generar el bootJar
         run: |
-          docker build -t api-cursos-online:latest .
-          if [ "$ACT" = "true" ]; then
-            docker save api-cursos-online:latest -o /tmp/api.tar
-            docker cp /tmp/api.tar desktop-control-plane:/api.tar
-            docker exec desktop-control-plane ctr -n k8s.io images import /api.tar
-            docker exec desktop-control-plane rm /api.tar && rm /tmp/api.tar
+          bash gradlew bootJar --no-daemon
+          test -f build/libs/api-cursos-online-0.0.1-SNAPSHOT.jar
+
+      - name: 5. Construir imagen Docker
+        run: |
+          docker build -t "$IMAGE_TAG" .
+          # Alias conservado por compatibilidad con documentación anterior.
+          docker tag "$IMAGE_TAG" api-cursos-online:latest
+
+      # ---------------------------------------------------------------------
+      # Despliegue: se ejecuta en push real y en act; se omite en pull_request.
+      # ---------------------------------------------------------------------
+      - name: 6. Instalar kubectl si no está disponible
+        if: ${{ !cancelled() && (env.ACT == 'true' || github.event_name == 'push') }}
+        run: |
+          set -euo pipefail
+          SUDO=""
+          if command -v sudo >/dev/null 2>&1; then SUDO="sudo"; fi
+          if ! command -v curl >/dev/null 2>&1; then
+            $SUDO apt-get update
+            $SUDO apt-get install -y --no-install-recommends curl ca-certificates
           fi
-
-      - name: 5. Configurar kubectl y validar conexión
-        if: env.ACT == 'true'
-        run: |
-          if ! command -v kubectl &> /dev/null; then
-            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          if ! command -v kubectl >/dev/null 2>&1; then
+            STABLE="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+            curl -fsSLo kubectl "https://dl.k8s.io/release/${STABLE}/bin/linux/amd64/kubectl"
             chmod +x kubectl
-            mv kubectl /usr/local/bin/
+            $SUDO mv kubectl /usr/local/bin/kubectl
           fi
-          mkdir -p ~/.kube
-          K8S_PORT=$(docker port desktop-control-plane 6443/tcp | head -n 1 | cut -d':' -f2)
-          K8S_PORT=${K8S_PORT:-6443}
-          docker exec desktop-control-plane cat /etc/kubernetes/admin.conf \
-            | sed -E "s#server: https://[^:]+:[0-9]+#server: https://host.docker.internal:${K8S_PORT}#g" \
-            | sed 's/certificate-authority-data:.*/insecure-skip-tls-verify: true/g' > ~/.kube/config
-          kubectl cluster-info
-         
+          kubectl version --client
 
-      - name: 6. Desplegar en Kubernetes local
-        if: env.ACT == 'true'
+      - name: 7. Preparar cluster y exportar kubeconfig a .kube-local/config
+        if: ${{ !cancelled() && (env.ACT == 'true' || github.event_name == 'push') }}
+        env:
+          # Se calcula con el contexto `env` para que act se detecte igual que en el `if`.
+          IS_ACT: ${{ env.ACT == 'true' && 'true' || 'false' }}
         run: |
-          awk '/CREATE TABLE ROL/,0' Documentacion_BD/plataforma_cursos_online_db.sql > /tmp/01_schema.sql
-          cp Documentacion_BD/datos_de_pruebas.sql /tmp/02_datos.sql
-          kubectl create configmap db-init-sql \
-            --from-file=01_schema.sql=/tmp/01_schema.sql \
-            --from-file=02_datos.sql=/tmp/02_datos.sql \
+          set -euo pipefail
+          mkdir -p "$(dirname "$KUBECONFIG")"
+          SUDO=""
+          if command -v sudo >/dev/null 2>&1; then SUDO="sudo"; fi
+          ACT_MODE="${IS_ACT:-${ACT:-false}}"
+
+          if ! command -v docker >/dev/null 2>&1; then
+            $SUDO apt-get update
+            $SUDO apt-get install -y --no-install-recommends docker.io
+          fi
+
+          # 1) Nodo/cluster: K8S_NODE (variable del repo) > docker-desktop > *-control-plane.
+          NODE="${K8S_NODE:-}"
+          if [ -z "$NODE" ]; then
+            if docker ps --format '{{.Names}}' | grep -qx 'docker-desktop'; then
+              NODE="docker-desktop"
+            else
+              NODE="$(docker ps --format '{{.Names}}' | grep -E -- '-control-plane$' | head -n 1 || true)"
+            fi
+          fi
+
+          # 2) En GitHub Actions se crea un cluster kind efímero si no hay uno accesible.
+          #    Con act el cluster vive en el host, así que nunca se crea uno aquí.
+          if [ "$ACT_MODE" != "true" ] && [ "$NODE" != "docker-desktop" ]; then
+            if ! command -v kind >/dev/null 2>&1; then
+              curl -fsSLo kind "https://kind.sigs.k8s.io/dl/v0.30.0/kind-linux-amd64"
+              chmod +x kind
+              $SUDO mv kind /usr/local/bin/kind
+            fi
+            if ! kind get clusters 2>/dev/null | grep -qx "$K8S_CLUSTER"; then
+              kind create cluster --name "$K8S_CLUSTER" --wait 180s
+              NODE="${K8S_CLUSTER}-control-plane"
+            fi
+          fi
+
+          if [ -z "$NODE" ]; then
+            echo "No se encontró ningún nodo Kubernetes. Crea un cluster kind con 'kind create cluster --name $K8S_CLUSTER' o define K8S_NODE." >&2
+            exit 1
+          fi
+          echo "RESOLVED_K8S_NODE=$NODE" >> "$GITHUB_ENV"
+          echo "Nodo Kubernetes seleccionado: $NODE"
+
+          # 3) Escribir SIEMPRE .kube-local/config (KUBECONFIG ya apunta ahí en el job).
+          if [ "$NODE" = "docker-desktop" ]; then
+            # Docker Desktop expone un kubeconfig válido con certificate-authority-data.
+            # Se lee el kubeconfig del host porque KUBECONFIG del job apunta al archivo nuevo.
+            KUBECONFIG="${HOME:-/root}/.kube/config" kubectl config view --raw --minify --flatten > "$KUBECONFIG"
+          elif [ "$ACT_MODE" = "true" ]; then
+            # act (Linux): el cluster está en el host y se alcanza por host.docker.internal:<puerto>.
+            HOST_PORT="$(docker port "$NODE" 6443/tcp | head -n 1 | awk -F: '{print $NF}')"
+            HOST_PORT="${HOST_PORT:-6443}"
+            docker exec "$NODE" cat /etc/kubernetes/admin.conf > /tmp/kind-admin.conf
+            if [ "${KUBE_INSECURE_SKIP_TLS:-auto}" = "false" ]; then
+              # Conserva certificate-authority-data del cluster (exige que el cert incluya
+              # host.docker.internal entre sus SAN; típicamente hay que recrear el cluster).
+              sed "s#server: https://[^:]*:[0-9]*#server: https://host.docker.internal:${HOST_PORT}#" \
+                /tmp/kind-admin.conf > "$KUBECONFIG"
+            else
+              # TODO: eliminar este escape cuando el cluster kind se cree con un SAN para
+              # host.docker.internal. Se usa SOLO en la ruta act; nunca en GitHub Actions.
+              # El API server de kind no incluye host.docker.internal en sus SAN y la
+              # verificación TLS falla. Se puede forzar con KUBE_INSECURE_SKIP_TLS=false.
+              sed -e "s#server: https://[^:]*:[0-9]*#server: https://host.docker.internal:${HOST_PORT}#" \
+                  -e 's#^\([[:space:]]*\)certificate-authority-data:.*#\1insecure-skip-tls-verify: true#' \
+                  /tmp/kind-admin.conf > "$KUBECONFIG"
+            fi
+          else
+            # GitHub Actions con kind: kubeconfig real, con CA del cluster (TLS verificado).
+            if command -v kind >/dev/null 2>&1 && kind get clusters 2>/dev/null | grep -qx "$K8S_CLUSTER"; then
+              kind export kubeconfig --name "$K8S_CLUSTER" --kubeconfig "$KUBECONFIG"
+            else
+              KUBECONFIG="${HOME:-/root}/.kube/config" kubectl config view --raw --minify --flatten > "$KUBECONFIG"
+            fi
+          fi
+
+          test -s "$KUBECONFIG"
+          kubectl cluster-info
+
+      - name: 8. Cargar la imagen en el cluster
+        if: ${{ !cancelled() && (env.ACT == 'true' || github.event_name == 'push') }}
+        run: |
+          set -euo pipefail
+          if [ "$RESOLVED_K8S_NODE" = "docker-desktop" ]; then
+            # Docker Desktop comparte el daemon de Docker con su cluster Kubernetes.
+            docker image inspect "$IMAGE_TAG" >/dev/null
+            echo "Imagen disponible en Docker Desktop: $IMAGE_TAG"
+          elif command -v kind >/dev/null 2>&1 && kind get clusters 2>/dev/null | grep -qx "$K8S_CLUSTER"; then
+            kind load docker-image "$IMAGE_TAG" --name "$K8S_CLUSTER"
+          else
+            # Fallback para act: importar la imagen en el containerd del nodo kind.
+            docker save "$IMAGE_TAG" -o /tmp/api-cursos.tar
+            docker cp /tmp/api-cursos.tar "$RESOLVED_K8S_NODE:/tmp/api-cursos.tar"
+            docker exec "$RESOLVED_K8S_NODE" ctr -n k8s.io images import /tmp/api-cursos.tar
+            docker exec "$RESOLVED_K8S_NODE" rm -f /tmp/api-cursos.tar
+            rm -f /tmp/api-cursos.tar
+          fi
+
+      - name: 9. Desplegar manifiestos en Kubernetes
+        if: ${{ !cancelled() && (env.ACT == 'true' || github.event_name == 'push') }}
+        run: |
+          set -euo pipefail
+          # El Secret versionado (k8s/secret.yaml) se sobrescribe con el valor
+          # configurable del repositorio. Se aplican el resto de manifiestos aparte
+          # para que `kubectl apply -f k8s/` no revierta esta contraseña.
+          kubectl create secret generic db-credentials \
+            --from-literal=POSTGRES_PASSWORD="$DB_PASSWORD" \
             --dry-run=client -o yaml | kubectl apply -f -
-          rm -f /tmp/01_schema.sql /tmp/02_datos.sql
+          kubectl apply -f k8s/db-init-configmap.yaml
           kubectl apply -f k8s/postgres.yaml
-          kubectl rollout status deployment/postgres-db --timeout=120s
           kubectl apply -f k8s/api-deployment.yaml
-          kubectl rollout restart deployment/api-cursos-online
-          kubectl rollout status deployment/api-cursos-online --timeout=120s
-          kubectl get pods,svc
-          
+          kubectl rollout status deployment/postgres-db --timeout=180s
+          kubectl rollout status deployment/api-cursos-online --timeout=180s
+
+      - name: 10. Verificación del despliegue
+        if: ${{ !cancelled() && (env.ACT == 'true' || github.event_name == 'push') }}
+        run: |
+          kubectl get pods,svc,pvc
+          kubectl get endpoints api-cursos-service

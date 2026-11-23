@@ -5,3 +5,9 @@ build
 .idea
 .kube-local
 k8s
+Documentacion_BD
+Postman
+README.md
+HELP.md
+.gitignore
+.gitattributes

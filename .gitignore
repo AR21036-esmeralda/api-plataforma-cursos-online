@@ -31,3 +31,6 @@ build/
 .idea/
 *.iml
 
+# Kubeconfig local de la defensa (contiene credenciales del cluster)
+.kube-local/
+
